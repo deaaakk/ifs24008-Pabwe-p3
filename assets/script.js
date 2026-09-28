@@ -13,6 +13,10 @@ function $(selector) {
 function $all(selector) {
   return document.querySelectorAll(selector);
 }
+/** Ikon SVG dari sprite di index.html */
+function icon(name) {
+  return `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+}
 function formatRupiah(num) {
   return "Rp " + Number(num).toLocaleString("id-ID");
 }
@@ -47,7 +51,8 @@ function switchTab(name) {
   tabButtons.forEach((btn) => {
     const active = btn.dataset.tab === name;
     btn.setAttribute("aria-selected", String(active));
-    btn.classList.toggle("bg-indigo-600", active);
+    btn.tabIndex = active ? 0 : -1; // roving tabindex (pola WAI-ARIA tabs)
+    btn.classList.toggle("bg-indigo-700", active);
     btn.classList.toggle("text-white", active);
     btn.classList.toggle("shadow", active);
     btn.classList.toggle("text-slate-600", !active);
@@ -57,14 +62,28 @@ function switchTab(name) {
   localStorage.setItem(TAB_STORAGE_KEY, name);
 }
 
-tabButtons.forEach((btn) => {
+tabButtons.forEach((btn, i) => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+
+  // Navigasi keyboard: panah kiri/kanan, Home, End
+  btn.addEventListener("keydown", (e) => {
+    const last = tabButtons.length - 1;
+    let next = null;
+    if (e.key === "ArrowRight") next = i === last ? 0 : i + 1;
+    if (e.key === "ArrowLeft") next = i === 0 ? last : i - 1;
+    if (e.key === "Home") next = 0;
+    if (e.key === "End") next = last;
+    if (next === null) return;
+    e.preventDefault();
+    tabButtons[next].focus();
+    switchTab(tabButtons[next].dataset.tab);
+  });
 });
 
 const savedTab = localStorage.getItem(TAB_STORAGE_KEY) || "expense";
 switchTab(savedTab);
 
-/* Tutup modal lewat backdrop / tombol X / Batal, dan tombol close umum */
+/* Tutup modal lewat backdrop / tombol X / Batal */
 $all("[data-close-modal]").forEach((el) => {
   el.addEventListener("click", () => {
     const name = el.dataset.closeModal;
@@ -204,13 +223,13 @@ function renderExpenses() {
       const editBtn = document.createElement("button");
       editBtn.type = "button";
       editBtn.className = "inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50";
-      editBtn.innerHTML = '<i class="ti ti-pencil"></i> Ubah';
+      editBtn.innerHTML = icon("pencil") + " Ubah";
       editBtn.addEventListener("click", () => openEditExpenseModal(exp.id));
 
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "inline-flex items-center gap-1 rounded-lg border border-rose-200 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50";
-      deleteBtn.innerHTML = '<i class="ti ti-trash"></i> Hapus';
+      deleteBtn.innerHTML = icon("trash") + " Hapus";
       deleteBtn.addEventListener("click", () => openDeleteExpenseModal(exp.id));
 
       actions.append(editBtn, deleteBtn);
@@ -436,13 +455,13 @@ function renderBookmarks() {
     const editBtn = document.createElement("button");
     editBtn.type = "button";
     editBtn.className = "inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50";
-    editBtn.innerHTML = '<i class="ti ti-pencil"></i> Ubah';
+    editBtn.innerHTML = icon("pencil") + " Ubah";
     editBtn.addEventListener("click", () => openEditBookmarkModal(bm.id));
 
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
     deleteBtn.className = "inline-flex items-center gap-1 rounded-lg border border-rose-200 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50";
-    deleteBtn.innerHTML = '<i class="ti ti-trash"></i> Hapus';
+    deleteBtn.innerHTML = icon("trash") + " Hapus";
     deleteBtn.addEventListener("click", () => openDeleteBookmarkModal(bm.id));
 
     actions.append(editBtn, deleteBtn);
@@ -715,11 +734,10 @@ function handleQuizAnswer(selectedIdx) {
     quizFeedback.textContent = `Salah. Jawaban benar: ${q.options[q.answer]}`;
   }
 
-  quizNextBtn.textContent = "";
   const isLast = quizIndex === QUIZ_QUESTIONS.length - 1;
   quizNextBtn.innerHTML = isLast
-    ? '<i class="ti ti-flag"></i> Lihat Hasil'
-    : 'Lanjut <i class="ti ti-arrow-right"></i>';
+    ? icon("flag") + " Lihat Hasil"
+    : "Lanjut " + icon("arrow-right");
   quizNextBtn.classList.remove("hidden-panel");
 }
 

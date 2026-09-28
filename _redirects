@@ -1,4 +1,3 @@
-# Agar /index dan /assets tidak 404 / tidak di-redirect ke "/"
 /index    /index.html   200!
 /assets   /index.html   200!
 /assets/  /index.html   200!
