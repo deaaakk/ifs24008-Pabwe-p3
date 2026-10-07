@@ -1,400 +1,541 @@
 /**
- * Trio Digital — Studi Kasus PABWE Praktikum 3
- * 3 fitur: DompetKu (Expense Tracker), LinkVault (Bookmark Manager), KuisKilat (Quiz App)
+ * DompetKu — Praktikum 3 PABWE (JavaScript)
+ * Fitur: Tab switcher, Expense Tracker, Bookmark Manager, Quiz App
+ * Semua data disimpan di localStorage (key berbeda per fitur).
  */
+"use strict";
 
-/* ========== UTILITAS ========== */
+/* =====================================================================
+   1. UTILITAS UMUM
+   ===================================================================== */
 
-function $(selector) {
-  const el = document.querySelector(selector);
+/** Ambil satu elemen; lempar error jika tidak ada (membantu debug DOM) */
+function $(selector, root = document) {
+  const el = root.querySelector(selector);
   if (!el) throw new Error(`Elemen tidak ditemukan: ${selector}`);
   return el;
 }
-function $all(selector) {
-  return document.querySelectorAll(selector);
+
+function $all(selector, root = document) {
+  return [...root.querySelectorAll(selector)];
 }
-/** Ikon SVG dari sprite di index.html */
-function icon(name) {
-  return `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+
+/** Buat elemen dengan class dan teks (textContent aman dari injeksi HTML) */
+function h(tag, className = "", text = "") {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (text) el.textContent = text;
+  return el;
 }
-function formatRupiah(num) {
-  return "Rp " + Number(num).toLocaleString("id-ID");
+
+/** ID unik untuk tiap item */
+function uid() {
+  return crypto.randomUUID
+    ? crypto.randomUUID()
+    : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
+
+/**
+ * Baca array dari localStorage.
+ * Data rusak / tidak sesuai bentuk (isValid) dibuang agar aplikasi tidak error.
+ */
+function loadList(key, isValid = () => true) {
+  try {
+    const data = JSON.parse(localStorage.getItem(key));
+    if (!Array.isArray(data)) return [];
+    return data.filter((item) => item && typeof item === "object" && isValid(item));
+  } catch {
+    return [];
+  }
+}
+
+function saveJSON(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* penyimpanan penuh / diblokir: abaikan agar aplikasi tetap jalan */
+  }
+}
+
+/** Tampilkan / sembunyikan pesan error pada form */
+function showError(el, message) {
+  el.classList.remove("hidden");
+  el.innerHTML = "";
+  el.append(h("i", "ti ti-alert-circle text-lg shrink-0"), h("span", "", message));
+}
+
+function clearError(el) {
+  el.classList.add("hidden");
+  el.textContent = "";
+}
+
+/** Isi <select> dari array string */
+function fillOptions(select, values, firstLabel = null) {
+  select.innerHTML = "";
+  if (firstLabel) select.append(new Option(firstLabel, "all"));
+  values.forEach((v) => select.append(new Option(v, v)));
+}
+
+const rupiah = new Intl.NumberFormat("id-ID", {
+  style: "currency",
+  currency: "IDR",
+  maximumFractionDigits: 2,
+});
+
+function formatDate(iso) {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+/** Tanggal hari ini (zona waktu lokal) format YYYY-MM-DD */
+function today() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+
+/* Key localStorage — dibedakan per fitur agar data tidak saling menimpa */
+const KEYS = {
+  tab: "dompetku-p3-active-tab",
+  expenses: "dompetku-p3-expenses",
+  bookmarks: "dompetku-p3-bookmarks",
+  quizHigh: "dompetku-p3-quiz-highscore",
+};
+
+/* =====================================================================
+   2. MODAL (dipakai bersama oleh semua fitur)
+   ===================================================================== */
+
+const modalDelete = $("#modal-delete");
+const deleteConfirm = $("#delete-confirm");
+let pendingDelete = null; // fungsi yang dijalankan saat hapus dikonfirmasi
+
 function openModal(modal) {
-  modal.classList.remove("hidden-panel");
+  modal.classList.remove("hidden");
   modal.classList.add("flex");
   document.body.classList.add("overflow-hidden");
+  const first = modal.querySelector("input, select, #delete-confirm");
+  if (first) first.focus();
 }
+
 function closeModal(modal) {
-  modal.classList.add("hidden-panel");
+  modal.classList.add("hidden");
   modal.classList.remove("flex");
-  document.body.classList.remove("overflow-hidden");
+  if (modal === modalDelete) pendingDelete = null;
+  // Kunci scroll baru dilepas jika tidak ada modal lain yang terbuka
+  if (!$all("[data-modal]").some((m) => !m.classList.contains("hidden"))) {
+    document.body.classList.remove("overflow-hidden");
+  }
 }
 
-/* ========== TAB SWITCHER ========== */
+/** Buka modal konfirmasi hapus untuk item tertentu */
+function askDelete(heading, label, onConfirm) {
+  $("#delete-heading").textContent = heading;
+  $("#delete-label").textContent = `"${label}"`;
+  pendingDelete = onConfirm;
+  openModal(modalDelete);
+}
 
-const TAB_STORAGE_KEY = "trio-p3-active-tab";
+deleteConfirm.addEventListener("click", () => {
+  const action = pendingDelete;
+  closeModal(modalDelete);
+  if (action) action();
+});
+
+// Tutup lewat backdrop, tombol X, atau tombol Batal (semua punya atribut data-close)
+$all("[data-modal]").forEach((modal) => {
+  modal.addEventListener("click", (e) => {
+    if (e.target.closest("[data-close]")) closeModal(modal);
+  });
+});
+
+// Tombol Escape menutup semua modal yang terbuka
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  $all("[data-modal]").forEach((m) => {
+    if (!m.classList.contains("hidden")) closeModal(m);
+  });
+});
+
+/* =====================================================================
+   3. TAB SWITCHER
+   ===================================================================== */
+
 const tabButtons = $all(".tab-btn");
-const tabPanels = {
+const panels = {
   expense: $("#panel-expense"),
   bookmark: $("#panel-bookmark"),
   quiz: $("#panel-quiz"),
 };
 
-function switchTab(name) {
-  if (!tabPanels[name]) name = "expense";
+const ACTIVE_CLASSES = ["bg-indigo-700", "text-white", "shadow"];
+const INACTIVE_CLASSES = ["text-slate-600", "hover:bg-slate-100"];
 
-  Object.entries(tabPanels).forEach(([key, panel]) => {
-    panel.classList.toggle("hidden-panel", key !== name);
+/** Tampilkan satu panel saja, tandai tombol aktif, simpan pilihan */
+function switchTab(name) {
+  if (!panels[name]) name = "expense";
+
+  Object.entries(panels).forEach(([key, panel]) => {
+    panel.classList.toggle("hidden", key !== name);
   });
 
   tabButtons.forEach((btn) => {
     const active = btn.dataset.tab === name;
     btn.setAttribute("aria-selected", String(active));
-    btn.tabIndex = active ? 0 : -1; // roving tabindex (pola WAI-ARIA tabs)
-    btn.classList.toggle("bg-indigo-700", active);
-    btn.classList.toggle("text-white", active);
-    btn.classList.toggle("shadow", active);
-    btn.classList.toggle("text-slate-600", !active);
-    btn.classList.toggle("hover:bg-slate-100", !active);
+    ACTIVE_CLASSES.forEach((c) => btn.classList.toggle(c, active));
+    INACTIVE_CLASSES.forEach((c) => btn.classList.toggle(c, !active));
   });
 
-  localStorage.setItem(TAB_STORAGE_KEY, name);
+  try {
+    localStorage.setItem(KEYS.tab, name);
+  } catch {
+    /* abaikan */
+  }
 }
 
-tabButtons.forEach((btn, i) => {
+tabButtons.forEach((btn) => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
-
-  // Navigasi keyboard: panah kiri/kanan, Home, End
-  btn.addEventListener("keydown", (e) => {
-    const last = tabButtons.length - 1;
-    let next = null;
-    if (e.key === "ArrowRight") next = i === last ? 0 : i + 1;
-    if (e.key === "ArrowLeft") next = i === 0 ? last : i - 1;
-    if (e.key === "Home") next = 0;
-    if (e.key === "End") next = last;
-    if (next === null) return;
-    e.preventDefault();
-    tabButtons[next].focus();
-    switchTab(tabButtons[next].dataset.tab);
-  });
 });
 
-const savedTab = localStorage.getItem(TAB_STORAGE_KEY) || "expense";
-switchTab(savedTab);
+/* =====================================================================
+   4. EXPENSE TRACKER
+   ===================================================================== */
 
-/* Tutup modal lewat backdrop / tombol X / Batal */
-$all("[data-close-modal]").forEach((el) => {
-  el.addEventListener("click", () => {
-    const name = el.dataset.closeModal;
-    const modal = document.getElementById(`modal-${name}`);
-    if (modal) closeModal(modal);
-    if (name === "edit-expense") editingExpenseId = null;
-    if (name === "edit-bookmark") editingBookmarkId = null;
-  });
-});
+const CATEGORIES = [
+  "Makanan", "Transportasi", "Belanja", "Tagihan",
+  "Pendidikan", "Hiburan", "Gaji", "Lainnya",
+];
 
-/* ======================================================================
-   FITUR 1: DOMPETKU (EXPENSE TRACKER)
-   ====================================================================== */
+/** Pastikan data transaksi dari localStorage punya bentuk yang benar */
+function isValidTransaction(t) {
+  return (
+    typeof t.id === "string" &&
+    typeof t.title === "string" &&
+    typeof t.category === "string" &&
+    (t.type === "Pemasukan" || t.type === "Pengeluaran") &&
+    Number.isFinite(t.amount) &&
+    typeof t.date === "string" &&
+    Number.isFinite(t.createdAt)
+  );
+}
 
-const EXPENSE_KEY = "trio-p3-expenses";
-let expenses = loadExpenses();
+let transactions = loadList(KEYS.expenses, isValidTransaction);
 let editingExpenseId = null;
-let deletingExpenseId = null;
 
+// Form tambah
 const expenseForm = $("#expense-form");
-const expenseTitle = $("#expense-title");
-const expenseCategory = $("#expense-category");
-const expenseAmount = $("#expense-amount");
-const expenseType = $("#expense-type");
-const expenseDate = $("#expense-date");
+const expenseFields = {
+  title: $("#expense-title"),
+  amount: $("#expense-amount"),
+  type: $("#expense-type"),
+  category: $("#expense-category"),
+  date: $("#expense-date"),
+};
 const expenseError = $("#expense-error");
+
+// Form ubah (modal)
+const modalExpense = $("#modal-expense");
+const editExpenseForm = $("#edit-expense-form");
+const editExpenseFields = {
+  title: $("#edit-expense-title"),
+  amount: $("#edit-expense-amount"),
+  type: $("#edit-expense-type"),
+  category: $("#edit-expense-category"),
+  date: $("#edit-expense-date"),
+};
+const editExpenseError = $("#edit-expense-error");
+
+// Pencarian, filter, sort, tampilan
 const expenseSearch = $("#expense-search");
 const expenseFilterType = $("#expense-filter-type");
+const expenseFilterCategory = $("#expense-filter-category");
 const expenseSort = $("#expense-sort");
 const expenseList = $("#expense-list");
 const expenseEmpty = $("#expense-empty");
 
-function loadExpenses() {
-  try {
-    const raw = localStorage.getItem(EXPENSE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-function saveExpenses() {
-  localStorage.setItem(EXPENSE_KEY, JSON.stringify(expenses));
+fillOptions(expenseFields.category, CATEGORIES);
+fillOptions(editExpenseFields.category, CATEGORIES);
+fillOptions(expenseFilterCategory, CATEGORIES, "Semua kategori");
+expenseFields.date.value = today();
+
+function saveTransactions() {
+  saveJSON(KEYS.expenses, transactions);
 }
 
-function updateExpenseSummary() {
-  const totalIncome = expenses
-    .filter((e) => e.type === "Pemasukan")
-    .reduce((sum, e) => sum + e.amount, 0);
-  const totalOutcome = expenses
-    .filter((e) => e.type === "Pengeluaran")
-    .reduce((sum, e) => sum + e.amount, 0);
+/**
+ * Baca + validasi field transaksi.
+ * Mengembalikan { error } jika tidak valid, atau { data } jika valid.
+ */
+function readTransaction(fields) {
+  const title = fields.title.value.trim();
+  const category = fields.category.value;
+  const type = fields.type.value;
+  const date = fields.date.value;
+  const rawAmount = fields.amount.value.trim();
 
-  $("#expense-total-income").textContent = formatRupiah(totalIncome);
-  $("#expense-total-outcome").textContent = formatRupiah(totalOutcome);
-  $("#expense-balance").textContent = formatRupiah(totalIncome - totalOutcome);
+  if (!title) return { error: "Judul transaksi wajib diisi." };
+  if (!category) return { error: "Pilih kategori transaksi." };
+  if (!rawAmount) return { error: "Jumlah wajib diisi." };
+
+  const amount = Number(rawAmount);
+  if (!Number.isFinite(amount)) return { error: "Jumlah harus berupa angka yang valid." };
+  if (amount <= 0) return { error: "Jumlah harus lebih dari 0." };
+  if (!date) return { error: "Tanggal wajib diisi." };
+
+  return { data: { title, category, type, amount, date } };
 }
 
+/** Hitung dan tampilkan total pemasukan, pengeluaran, dan saldo */
+function renderSummary() {
+  const sum = (type) =>
+    transactions.filter((t) => t.type === type).reduce((acc, t) => acc + t.amount, 0);
+  const income = sum("Pemasukan");
+  const expense = sum("Pengeluaran");
+  const balance = income - expense;
+
+  $("#sum-income").textContent = rupiah.format(income);
+  $("#sum-expense").textContent = rupiah.format(expense);
+  const balanceEl = $("#sum-balance");
+  balanceEl.textContent = rupiah.format(balance);
+  balanceEl.classList.toggle("text-rose-700", balance < 0);
+  balanceEl.classList.toggle("text-indigo-900", balance >= 0);
+}
+
+/** Filter + sort, lalu bangun ulang daftar lewat DOM */
 function renderExpenses() {
+  renderSummary();
+
   const query = expenseSearch.value.trim().toLowerCase();
   const typeFilter = expenseFilterType.value;
-  const sort = expenseSort.value;
+  const categoryFilter = expenseFilterCategory.value;
 
-  let items = expenses.filter((e) => e.title.toLowerCase().includes(query));
-  if (typeFilter !== "all") {
-    items = items.filter((e) => e.type === typeFilter);
-  }
+  let items = transactions.filter(
+    (t) =>
+      t.title.toLowerCase().includes(query) &&
+      (typeFilter === "all" || t.type === typeFilter) &&
+      (categoryFilter === "all" || t.category === categoryFilter)
+  );
 
   items = [...items].sort((a, b) => {
-    switch (sort) {
+    switch (expenseSort.value) {
       case "oldest":
-        return a.createdAt - b.createdAt;
+        return a.date.localeCompare(b.date) || a.createdAt - b.createdAt;
       case "amount-desc":
         return b.amount - a.amount;
       case "amount-asc":
         return a.amount - b.amount;
       case "newest":
       default:
-        return b.createdAt - a.createdAt;
+        return b.date.localeCompare(a.date) || b.createdAt - a.createdAt;
     }
   });
 
-  const noData = expenses.length === 0;
-  expenseEmpty.classList.toggle("hidden-panel", !noData);
+  // Empty state jika belum ada data sama sekali
+  const noData = transactions.length === 0;
+  expenseEmpty.classList.toggle("hidden", !noData);
+  expenseList.classList.toggle("hidden", noData);
   expenseList.innerHTML = "";
+  if (noData) return;
 
-  if (noData) {
-    updateExpenseSummary();
+  // Tidak ada hasil untuk pencarian / filter
+  if (items.length === 0) {
+    expenseList.append(
+      h("li", "rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600",
+        "Tidak ada transaksi yang cocok dengan pencarian atau filter.")
+    );
     return;
   }
 
-  if (items.length === 0) {
-    const li = document.createElement("li");
-    li.className = "rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600";
-    li.textContent = "Tidak ada transaksi yang cocok.";
-    expenseList.appendChild(li);
-  } else {
-    items.forEach((exp) => {
-      const li = document.createElement("li");
-      li.className = "flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-slate-200 px-4 py-3";
+  items.forEach((t) => {
+    const isIncome = t.type === "Pemasukan";
+    const li = h("li", "flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-slate-200 px-4 py-3");
+    li.dataset.id = t.id;
 
-      const info = document.createElement("div");
-      info.className = "flex-1 min-w-0";
+    const info = h("div", "flex-1 min-w-0");
+    info.append(h("p", "font-semibold text-slate-900 truncate", t.title));
+    const meta = h("div", "mt-1 flex flex-wrap items-center gap-1.5");
+    meta.append(
+      h("span", `badge ${isIncome ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}`, t.type),
+      h("span", "badge bg-slate-100 text-slate-700", t.category),
+      h("span", "text-xs text-slate-500", formatDate(t.date))
+    );
+    info.append(meta);
 
-      const titleEl = document.createElement("p");
-      titleEl.className = "font-medium text-slate-900 truncate";
-      titleEl.textContent = exp.title;
+    const amount = h(
+      "p",
+      `font-display font-bold shrink-0 ${isIncome ? "text-emerald-700" : "text-rose-700"}`,
+      `${isIncome ? "+" : "−"} ${rupiah.format(t.amount)}`
+    );
 
-      const meta = document.createElement("div");
-      meta.className = "flex flex-wrap items-center gap-2 mt-1";
+    const actions = h("div", "flex items-center gap-1.5 shrink-0");
+    const editBtn = h("button", "btn btn-sm btn-outline");
+    editBtn.type = "button";
+    editBtn.innerHTML = '<i class="ti ti-pencil"></i> Ubah';
+    editBtn.addEventListener("click", () => openEditExpense(t.id));
 
-      const catBadge = document.createElement("span");
-      catBadge.className = "text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700";
-      catBadge.textContent = exp.category;
+    const delBtn = h("button", "btn btn-sm border border-rose-200 text-rose-700 hover:bg-rose-50");
+    delBtn.type = "button";
+    delBtn.innerHTML = '<i class="ti ti-trash"></i> Hapus';
+    delBtn.addEventListener("click", () =>
+      askDelete("Hapus transaksi", t.title, () => {
+        transactions = transactions.filter((x) => x.id !== t.id);
+        saveTransactions();
+        renderExpenses();
+      })
+    );
 
-      const typeBadge = document.createElement("span");
-      typeBadge.className = `text-xs font-semibold px-2 py-0.5 rounded-md ${
-        exp.type === "Pemasukan" ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
-      }`;
-      typeBadge.textContent = exp.type;
-
-      const dateBadge = document.createElement("span");
-      dateBadge.className = "text-xs text-slate-500";
-      dateBadge.textContent = exp.date;
-
-      meta.append(catBadge, typeBadge, dateBadge);
-      info.append(titleEl, meta);
-
-      const amountEl = document.createElement("p");
-      amountEl.className = `font-display font-semibold whitespace-nowrap ${
-        exp.type === "Pemasukan" ? "text-emerald-700" : "text-rose-700"
-      }`;
-      amountEl.textContent = (exp.type === "Pemasukan" ? "+ " : "- ") + formatRupiah(exp.amount);
-
-      const actions = document.createElement("div");
-      actions.className = "flex items-center gap-1.5 shrink-0";
-
-      const editBtn = document.createElement("button");
-      editBtn.type = "button";
-      editBtn.className = "inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50";
-      editBtn.innerHTML = icon("pencil") + " Ubah";
-      editBtn.addEventListener("click", () => openEditExpenseModal(exp.id));
-
-      const deleteBtn = document.createElement("button");
-      deleteBtn.type = "button";
-      deleteBtn.className = "inline-flex items-center gap-1 rounded-lg border border-rose-200 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50";
-      deleteBtn.innerHTML = icon("trash") + " Hapus";
-      deleteBtn.addEventListener("click", () => openDeleteExpenseModal(exp.id));
-
-      actions.append(editBtn, deleteBtn);
-      li.append(info, amountEl, actions);
-      expenseList.appendChild(li);
-    });
-  }
-
-  updateExpenseSummary();
+    actions.append(editBtn, delBtn);
+    li.append(info, amount, actions);
+    expenseList.append(li);
+  });
 }
 
-function showExpenseError(message) {
-  expenseError.textContent = message;
-  expenseError.classList.remove("hidden-panel");
-}
-function clearExpenseError() {
-  expenseError.textContent = "";
-  expenseError.classList.add("hidden-panel");
+function openEditExpense(id) {
+  const t = transactions.find((x) => x.id === id);
+  if (!t) return;
+  editingExpenseId = id;
+  editExpenseFields.title.value = t.title;
+  editExpenseFields.amount.value = t.amount;
+  editExpenseFields.type.value = t.type;
+  editExpenseFields.category.value = t.category;
+  editExpenseFields.date.value = t.date;
+  clearError(editExpenseError);
+  openModal(modalExpense);
 }
 
+// Tambah transaksi
 expenseForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  clearExpenseError();
+  const result = readTransaction(expenseFields);
+  if (result.error) return showError(expenseError, result.error);
 
-  const title = expenseTitle.value.trim();
-  const category = expenseCategory.value;
-  const amount = Number(expenseAmount.value);
-  const type = expenseType.value;
-  const date = expenseDate.value;
+  clearError(expenseError);
+  transactions.push({ id: uid(), createdAt: Date.now(), ...result.data });
+  saveTransactions();
 
-  if (!title || !category || !date) {
-    showExpenseError("Judul, kategori, dan tanggal wajib diisi.");
-    return;
-  }
-  if (!expenseAmount.value || isNaN(amount) || amount <= 0) {
-    showExpenseError("Jumlah harus berupa angka valid dan lebih dari 0.");
-    return;
-  }
-
-  expenses.push({
-    id: crypto.randomUUID(),
-    title,
-    category,
-    amount,
-    type,
-    date,
-    createdAt: Date.now(),
-  });
-
-  saveExpenses();
-  expenseForm.reset();
+  // Reset form, pertahankan tipe & tanggal hari ini
+  expenseFields.title.value = "";
+  expenseFields.amount.value = "";
+  expenseFields.date.value = today();
   renderExpenses();
+  expenseFields.title.focus();
 });
 
-function openEditExpenseModal(id) {
-  const exp = expenses.find((e) => e.id === id);
-  if (!exp) return;
-  editingExpenseId = id;
-  $("#edit-expense-title").value = exp.title;
-  $("#edit-expense-category").value = exp.category;
-  $("#edit-expense-amount").value = exp.amount;
-  $("#edit-expense-type").value = exp.type;
-  $("#edit-expense-date").value = exp.date;
-  openModal($("#modal-edit-expense"));
-}
-
-function openDeleteExpenseModal(id) {
-  const exp = expenses.find((e) => e.id === id);
-  if (!exp) return;
-  deletingExpenseId = id;
-  $("#delete-expense-title").textContent = `"${exp.title}"`;
-  openModal($("#modal-delete-expense"));
-}
-
-$("#edit-expense-form").addEventListener("submit", (e) => {
+// Simpan perubahan dari modal
+editExpenseForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  if (!editingExpenseId) return;
+  const result = readTransaction(editExpenseFields);
+  if (result.error) return showError(editExpenseError, result.error);
 
-  const amount = Number($("#edit-expense-amount").value);
-  const title = $("#edit-expense-title").value.trim();
-  if (!title || isNaN(amount) || amount <= 0) return;
-
-  const exp = expenses.find((x) => x.id === editingExpenseId);
-  if (exp) {
-    exp.title = title;
-    exp.category = $("#edit-expense-category").value;
-    exp.amount = amount;
-    exp.type = $("#edit-expense-type").value;
-    exp.date = $("#edit-expense-date").value;
-    saveExpenses();
+  const t = transactions.find((x) => x.id === editingExpenseId);
+  if (t) {
+    Object.assign(t, result.data);
+    saveTransactions();
     renderExpenses();
   }
   editingExpenseId = null;
-  closeModal($("#modal-edit-expense"));
+  closeModal(modalExpense);
 });
 
-$("#delete-expense-confirm").addEventListener("click", () => {
-  if (!deletingExpenseId) return;
-  expenses = expenses.filter((e) => e.id !== deletingExpenseId);
-  saveExpenses();
-  renderExpenses();
-  deletingExpenseId = null;
-  closeModal($("#modal-delete-expense"));
-});
+[expenseSearch].forEach((el) => el.addEventListener("input", renderExpenses));
+[expenseFilterType, expenseFilterCategory, expenseSort].forEach((el) =>
+  el.addEventListener("change", renderExpenses)
+);
 
-expenseSearch.addEventListener("input", renderExpenses);
-expenseFilterType.addEventListener("change", renderExpenses);
-expenseSort.addEventListener("change", renderExpenses);
+/* =====================================================================
+   5. BOOKMARK / LINK MANAGER
+   ===================================================================== */
 
-renderExpenses();
+/** Pastikan data bookmark dari localStorage punya bentuk yang benar */
+function isValidBookmark(b) {
+  return (
+    typeof b.id === "string" &&
+    typeof b.title === "string" &&
+    typeof b.url === "string" &&
+    typeof b.category === "string" &&
+    typeof b.note === "string" &&
+    Number.isFinite(b.createdAt)
+  );
+}
 
-/* ======================================================================
-   FITUR 2: LINKVAULT (BOOKMARK MANAGER)
-   ====================================================================== */
-
-const BOOKMARK_KEY = "trio-p3-bookmarks";
-let bookmarks = loadBookmarks();
+let bookmarks = loadList(KEYS.bookmarks, isValidBookmark);
 let editingBookmarkId = null;
-let deletingBookmarkId = null;
 
 const bookmarkForm = $("#bookmark-form");
-const bookmarkName = $("#bookmark-name");
-const bookmarkUrl = $("#bookmark-url");
-const bookmarkCategory = $("#bookmark-category");
-const bookmarkNote = $("#bookmark-note");
+const bookmarkFields = {
+  title: $("#bookmark-title"),
+  url: $("#bookmark-url"),
+  category: $("#bookmark-category"),
+  note: $("#bookmark-note"),
+};
 const bookmarkError = $("#bookmark-error");
+
+const modalBookmark = $("#modal-bookmark");
+const editBookmarkForm = $("#edit-bookmark-form");
+const editBookmarkFields = {
+  title: $("#edit-bookmark-title"),
+  url: $("#edit-bookmark-url"),
+  category: $("#edit-bookmark-category"),
+  note: $("#edit-bookmark-note"),
+};
+const editBookmarkError = $("#edit-bookmark-error");
+
 const bookmarkSearch = $("#bookmark-search");
 const bookmarkSort = $("#bookmark-sort");
 const bookmarkList = $("#bookmark-list");
 const bookmarkEmpty = $("#bookmark-empty");
 
-function loadBookmarks() {
-  try {
-    const raw = localStorage.getItem(BOOKMARK_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
 function saveBookmarks() {
-  localStorage.setItem(BOOKMARK_KEY, JSON.stringify(bookmarks));
+  saveJSON(KEYS.bookmarks, bookmarks);
 }
 
-/** Validasi URL sederhana: harus diawali http:// atau https:// */
-function isValidUrl(url) {
-  return /^https?:\/\/.+/i.test(url.trim());
+/** Validasi URL: wajib diawali http:// atau https:// dan bisa di-parse */
+function isValidUrl(value) {
+  if (!/^https?:\/\/\S+$/i.test(value)) return false;
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Baca + validasi field bookmark */
+function readBookmark(fields) {
+  const title = fields.title.value.trim();
+  const url = fields.url.value.trim();
+  const category = fields.category.value.trim();
+  const note = fields.note.value.trim();
+
+  if (!title) return { error: "Nama bookmark wajib diisi." };
+  if (!url) return { error: "URL wajib diisi." };
+  if (!isValidUrl(url)) {
+    return { error: "URL tidak valid. Gunakan awalan http:// atau https:// (contoh: https://example.com)." };
+  }
+  if (!category) return { error: "Kategori / tag wajib diisi." };
+
+  return { data: { title, url, category, note } };
 }
 
 function renderBookmarks() {
   const query = bookmarkSearch.value.trim().toLowerCase();
-  const sort = bookmarkSort.value;
 
   let items = bookmarks.filter(
     (b) =>
-      b.name.toLowerCase().includes(query) ||
+      b.title.toLowerCase().includes(query) ||
       b.url.toLowerCase().includes(query) ||
       b.category.toLowerCase().includes(query)
   );
 
   items = [...items].sort((a, b) => {
-    switch (sort) {
+    switch (bookmarkSort.value) {
       case "title-asc":
-        return a.name.localeCompare(b.name, "id");
+        return a.title.localeCompare(b.title, "id");
       case "title-desc":
-        return b.name.localeCompare(a.name, "id");
+        return b.title.localeCompare(a.title, "id");
       case "newest":
       default:
         return b.createdAt - a.createdAt;
@@ -402,381 +543,366 @@ function renderBookmarks() {
   });
 
   const noData = bookmarks.length === 0;
-  bookmarkEmpty.classList.toggle("hidden-panel", !noData);
+  bookmarkEmpty.classList.toggle("hidden", !noData);
+  bookmarkList.classList.toggle("hidden", noData);
   bookmarkList.innerHTML = "";
   if (noData) return;
 
   if (items.length === 0) {
-    const li = document.createElement("li");
-    li.className = "rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600";
-    li.textContent = "Tidak ada bookmark yang cocok.";
-    bookmarkList.appendChild(li);
+    bookmarkList.append(
+      h("li", "rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600",
+        "Tidak ada bookmark yang cocok dengan pencarian.")
+    );
     return;
   }
 
-  items.forEach((bm) => {
-    const li = document.createElement("li");
-    li.className = "flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-slate-200 px-4 py-3";
+  items.forEach((b) => {
+    const li = h("li", "flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-slate-200 px-4 py-3");
+    li.dataset.id = b.id;
 
-    const info = document.createElement("div");
-    info.className = "flex-1 min-w-0";
+    const info = h("div", "flex-1 min-w-0");
 
-    const link = document.createElement("a");
-    link.href = bm.url;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    link.className = "font-medium text-sky-700 hover:underline truncate block";
-    link.textContent = bm.name;
+    // Judul = tautan yang dibuka di tab baru
+    const titleLink = h("a", "font-semibold text-indigo-800 hover:underline block truncate", b.title);
+    titleLink.href = b.url;
+    titleLink.target = "_blank";
+    titleLink.rel = "noopener noreferrer";
 
-    const urlEl = document.createElement("p");
-    urlEl.className = "text-xs text-slate-500 truncate";
-    urlEl.textContent = bm.url;
+    const urlLink = h("a", "text-xs text-slate-500 hover:underline block truncate", b.url);
+    urlLink.href = b.url;
+    urlLink.target = "_blank";
+    urlLink.rel = "noopener noreferrer";
 
-    const meta = document.createElement("div");
-    meta.className = "flex flex-wrap items-center gap-2 mt-1";
+    info.append(titleLink, urlLink);
+    const meta = h("div", "mt-1.5 flex flex-wrap items-center gap-2");
+    meta.append(h("span", "badge bg-indigo-100 text-indigo-800", b.category));
+    if (b.note) meta.append(h("span", "text-xs text-slate-600", b.note));
+    info.append(meta);
 
-    const catBadge = document.createElement("span");
-    catBadge.className = "text-xs font-semibold px-2 py-0.5 rounded-md bg-sky-100 text-sky-800";
-    catBadge.textContent = bm.category || "Umum";
-    meta.append(catBadge);
-
-    info.append(link, urlEl, meta);
-
-    if (bm.note) {
-      const noteEl = document.createElement("p");
-      noteEl.className = "text-xs text-slate-500 mt-1 italic";
-      noteEl.textContent = bm.note;
-      info.append(noteEl);
-    }
-
-    const actions = document.createElement("div");
-    actions.className = "flex items-center gap-1.5 shrink-0";
-
-    const editBtn = document.createElement("button");
+    const actions = h("div", "flex items-center gap-1.5 shrink-0");
+    const editBtn = h("button", "btn btn-sm btn-outline");
     editBtn.type = "button";
-    editBtn.className = "inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50";
-    editBtn.innerHTML = icon("pencil") + " Ubah";
-    editBtn.addEventListener("click", () => openEditBookmarkModal(bm.id));
+    editBtn.innerHTML = '<i class="ti ti-pencil"></i> Ubah';
+    editBtn.addEventListener("click", () => openEditBookmark(b.id));
 
-    const deleteBtn = document.createElement("button");
-    deleteBtn.type = "button";
-    deleteBtn.className = "inline-flex items-center gap-1 rounded-lg border border-rose-200 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50";
-    deleteBtn.innerHTML = icon("trash") + " Hapus";
-    deleteBtn.addEventListener("click", () => openDeleteBookmarkModal(bm.id));
+    const delBtn = h("button", "btn btn-sm border border-rose-200 text-rose-700 hover:bg-rose-50");
+    delBtn.type = "button";
+    delBtn.innerHTML = '<i class="ti ti-trash"></i> Hapus';
+    delBtn.addEventListener("click", () =>
+      askDelete("Hapus bookmark", b.title, () => {
+        bookmarks = bookmarks.filter((x) => x.id !== b.id);
+        saveBookmarks();
+        renderBookmarks();
+      })
+    );
 
-    actions.append(editBtn, deleteBtn);
+    actions.append(editBtn, delBtn);
     li.append(info, actions);
-    bookmarkList.appendChild(li);
+    bookmarkList.append(li);
   });
 }
 
-function showBookmarkError(message) {
-  bookmarkError.textContent = message;
-  bookmarkError.classList.remove("hidden-panel");
-}
-function clearBookmarkError() {
-  bookmarkError.textContent = "";
-  bookmarkError.classList.add("hidden-panel");
+function openEditBookmark(id) {
+  const b = bookmarks.find((x) => x.id === id);
+  if (!b) return;
+  editingBookmarkId = id;
+  editBookmarkFields.title.value = b.title;
+  editBookmarkFields.url.value = b.url;
+  editBookmarkFields.category.value = b.category;
+  editBookmarkFields.note.value = b.note;
+  clearError(editBookmarkError);
+  openModal(modalBookmark);
 }
 
 bookmarkForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  clearBookmarkError();
+  const result = readBookmark(bookmarkFields);
+  if (result.error) return showError(bookmarkError, result.error);
 
-  const name = bookmarkName.value.trim();
-  const url = bookmarkUrl.value.trim();
-  const category = bookmarkCategory.value.trim();
-
-  if (!name || !url) {
-    showBookmarkError("Nama dan URL wajib diisi.");
-    return;
-  }
-  if (!isValidUrl(url)) {
-    showBookmarkError("URL harus diawali dengan http:// atau https://");
-    return;
-  }
-
-  bookmarks.push({
-    id: crypto.randomUUID(),
-    name,
-    url,
-    category: category || "Umum",
-    note: bookmarkNote.value.trim(),
-    createdAt: Date.now(),
-  });
-
+  clearError(bookmarkError);
+  bookmarks.push({ id: uid(), createdAt: Date.now(), ...result.data });
   saveBookmarks();
   bookmarkForm.reset();
   renderBookmarks();
+  bookmarkFields.title.focus();
 });
 
-function openEditBookmarkModal(id) {
-  const bm = bookmarks.find((b) => b.id === id);
-  if (!bm) return;
-  editingBookmarkId = id;
-  $("#edit-bookmark-name").value = bm.name;
-  $("#edit-bookmark-url").value = bm.url;
-  $("#edit-bookmark-category").value = bm.category;
-  $("#edit-bookmark-note").value = bm.note || "";
-  $("#edit-bookmark-error").classList.add("hidden-panel");
-  openModal($("#modal-edit-bookmark"));
-}
-
-function openDeleteBookmarkModal(id) {
-  const bm = bookmarks.find((b) => b.id === id);
-  if (!bm) return;
-  deletingBookmarkId = id;
-  $("#delete-bookmark-title").textContent = `"${bm.name}"`;
-  openModal($("#modal-delete-bookmark"));
-}
-
-$("#edit-bookmark-form").addEventListener("submit", (e) => {
+editBookmarkForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  if (!editingBookmarkId) return;
+  const result = readBookmark(editBookmarkFields);
+  if (result.error) return showError(editBookmarkError, result.error);
 
-  const name = $("#edit-bookmark-name").value.trim();
-  const url = $("#edit-bookmark-url").value.trim();
-  const errEl = $("#edit-bookmark-error");
-
-  if (!name || !url) {
-    errEl.textContent = "Nama dan URL wajib diisi.";
-    errEl.classList.remove("hidden-panel");
-    return;
-  }
-  if (!isValidUrl(url)) {
-    errEl.textContent = "URL harus diawali dengan http:// atau https://";
-    errEl.classList.remove("hidden-panel");
-    return;
-  }
-
-  const bm = bookmarks.find((b) => b.id === editingBookmarkId);
-  if (bm) {
-    bm.name = name;
-    bm.url = url;
-    bm.category = $("#edit-bookmark-category").value.trim() || "Umum";
-    bm.note = $("#edit-bookmark-note").value.trim();
+  const b = bookmarks.find((x) => x.id === editingBookmarkId);
+  if (b) {
+    Object.assign(b, result.data);
     saveBookmarks();
     renderBookmarks();
   }
   editingBookmarkId = null;
-  closeModal($("#modal-edit-bookmark"));
-});
-
-$("#delete-bookmark-confirm").addEventListener("click", () => {
-  if (!deletingBookmarkId) return;
-  bookmarks = bookmarks.filter((b) => b.id !== deletingBookmarkId);
-  saveBookmarks();
-  renderBookmarks();
-  deletingBookmarkId = null;
-  closeModal($("#modal-delete-bookmark"));
+  closeModal(modalBookmark);
 });
 
 bookmarkSearch.addEventListener("input", renderBookmarks);
 bookmarkSort.addEventListener("change", renderBookmarks);
 
-renderBookmarks();
+/* =====================================================================
+   6. QUIZ APP
+   ===================================================================== */
 
-/* ======================================================================
-   FITUR 3: KUISKILAT (QUIZ APP)
-   ====================================================================== */
+const QUIZ_TIME = 15; // detik per soal
 
-const QUIZ_HIGHSCORE_KEY = "trio-p3-quiz-highscore";
-const QUIZ_TIME_PER_QUESTION = 15; // detik
-
-/** Soal disimpan sebagai array of object (bukan hardcode HTML per soal) */
-const QUIZ_QUESTIONS = [
-  {
-    question: "Tag HTML apa yang digunakan untuk membuat tautan (link)?",
-    options: ["<link>", "<a>", "<href>", "<nav>"],
-    answer: 1,
-  },
-  {
-    question: "Properti CSS apa yang mengatur warna teks?",
-    options: ["background-color", "text-style", "color", "font-color"],
-    answer: 2,
-  },
-  {
-    question: "Fungsi JavaScript untuk memilih satu elemen berdasarkan selector CSS adalah?",
-    options: ["getElementById()", "querySelector()", "selectElement()", "findElement()"],
-    answer: 1,
-  },
-  {
-    question: "Objek browser yang menyimpan data secara permanen (bertahan setelah refresh) adalah?",
-    options: ["sessionStorage", "cookie", "localStorage", "cache"],
-    answer: 2,
-  },
-  {
-    question: "Method array JavaScript untuk mengubah setiap elemen dan mengembalikan array baru adalah?",
-    options: ["forEach()", "map()", "filter()", "reduce()"],
-    answer: 1,
-  },
+/** Bank soal: array of object { q, options, answer (indeks opsi benar) } */
+const QUESTIONS = [
+  { q: "Tag HTML yang dipakai untuk membuat tautan adalah…",
+    options: ["<link>", "<a>", "<href>", "<url>"], answer: 1 },
+  { q: "Properti CSS untuk mengubah warna teks adalah…",
+    options: ["font-color", "text-color", "color", "foreground"], answer: 2 },
+  { q: "Method JavaScript untuk mengambil elemen berdasarkan id adalah…",
+    options: ["getElementById()", "getElement()", "queryId()", "selectById()"], answer: 0 },
+  { q: "Apa hasil dari typeof null di JavaScript?",
+    options: ["\"null\"", "\"undefined\"", "\"object\"", "\"number\""], answer: 2 },
+  { q: "Kata kunci untuk variabel yang tidak dapat diberi nilai ulang adalah…",
+    options: ["var", "let", "static", "const"], answer: 3 },
+  { q: "Method array untuk menambahkan elemen di akhir array adalah…",
+    options: ["push()", "pop()", "shift()", "unshift()"], answer: 0 },
+  { q: "Operator === pada JavaScript membandingkan…",
+    options: ["Nilai saja", "Tipe saja", "Nilai dan tipe data", "Alamat memori"], answer: 2 },
+  { q: "Method untuk mengubah objek JavaScript menjadi string JSON adalah…",
+    options: ["JSON.parse()", "JSON.stringify()", "JSON.toString()", "JSON.encode()"], answer: 1 },
+  { q: "Atribut HTML agar tautan terbuka di tab baru adalah…",
+    options: ["target=\"_self\"", "rel=\"tab\"", "target=\"_blank\"", "open=\"new\""], answer: 2 },
+  { q: "Event yang dipicu saat sebuah <form> dikirim adalah…",
+    options: ["click", "submit", "change", "send"], answer: 1 },
 ];
 
-let quizIndex = 0;
-let quizScore = 0;
-let quizAnswered = false;
-let quizTimeLeft = QUIZ_TIME_PER_QUESTION;
-let quizTimerHandle = null;
+// State aplikasi kuis
+const quiz = {
+  index: 0,          // nomor soal aktif
+  score: 0,
+  answered: false,   // apakah soal aktif sudah dijawab
+  timeLeft: QUIZ_TIME,
+  timerId: null,
+  answers: [],       // indeks opsi yang dipilih user per soal (-1 = waktu habis)
+  results: [],       // "benar" | "salah" | "waktu habis" per soal
+};
 
-const quizStartScreen = $("#quiz-start-screen");
-const quizQuestionScreen = $("#quiz-question-screen");
-const quizResultScreen = $("#quiz-result-screen");
-const quizStartBtn = $("#quiz-start-btn");
-const quizRestartBtn = $("#quiz-restart-btn");
-const quizNextBtn = $("#quiz-next-btn");
-const quizCurrentNum = $("#quiz-current-num");
-const quizTotalNum = $("#quiz-total-num");
-const quizQuestionText = $("#quiz-question-text");
-const quizOptionsWrap = $("#quiz-options");
-const quizFeedback = $("#quiz-feedback");
-const quizTimerEl = $("#quiz-timer");
+const quizViews = {
+  start: $("#quiz-start"),
+  play: $("#quiz-play"),
+  result: $("#quiz-result"),
+};
+const quizHighEl = $("#quiz-highscore");
+const quizProgressLabel = $("#quiz-progress-label");
+const quizLiveScore = $("#quiz-live-score");
+const quizTimerText = $("#quiz-timer-text");
 const quizTimerBar = $("#quiz-timer-bar");
+const quizQuestion = $("#quiz-question");
+const quizOptions = $("#quiz-options");
+const quizFeedback = $("#quiz-feedback");
+const quizNext = $("#quiz-next");
 
-quizTotalNum.textContent = String(QUIZ_QUESTIONS.length);
+$("#quiz-total-label").textContent = String(QUESTIONS.length);
+$("#quiz-time-label").textContent = String(QUIZ_TIME);
 
-function getQuizHighscore() {
-  const v = localStorage.getItem(QUIZ_HIGHSCORE_KEY);
-  return v ? Number(v) : null;
-}
-function showQuizHighscore() {
-  const top = getQuizHighscore();
-  const text = top === null ? "—" : `${top} / ${QUIZ_QUESTIONS.length}`;
-  $("#quiz-highscore-start").textContent = text;
-  $("#quiz-highscore-end").textContent = text;
-}
-showQuizHighscore();
-
-function startQuiz() {
-  quizIndex = 0;
-  quizScore = 0;
-  quizStartScreen.classList.add("hidden-panel");
-  quizResultScreen.classList.add("hidden-panel");
-  quizQuestionScreen.classList.remove("hidden-panel");
-  renderQuizQuestion();
+function getHighScore() {
+  const v = localStorage.getItem(KEYS.quizHigh);
+  return v === null ? null : Number(v);
 }
 
-function stopQuizTimer() {
-  if (quizTimerHandle) {
-    clearInterval(quizTimerHandle);
-    quizTimerHandle = null;
+function showHighScore() {
+  const high = getHighScore();
+  quizHighEl.textContent = high === null ? "—" : `${high} / ${QUESTIONS.length}`;
+}
+
+function showQuizView(name) {
+  Object.entries(quizViews).forEach(([key, el]) => el.classList.toggle("hidden", key !== name));
+}
+
+function stopTimer() {
+  if (quiz.timerId !== null) {
+    clearInterval(quiz.timerId);
+    quiz.timerId = null;
   }
 }
 
-function startQuizTimer() {
-  stopQuizTimer();
-  quizTimeLeft = QUIZ_TIME_PER_QUESTION;
-  quizTimerEl.textContent = String(quizTimeLeft);
-  quizTimerBar.style.width = "100%";
+function updateTimerUI() {
+  quizTimerText.textContent = String(quiz.timeLeft);
+  quizTimerBar.style.width = `${(quiz.timeLeft / QUIZ_TIME) * 100}%`;
+  const urgent = quiz.timeLeft <= 5;
+  quizTimerBar.classList.toggle("bg-rose-500", urgent);
+  quizTimerBar.classList.toggle("bg-indigo-600", !urgent);
+}
 
-  quizTimerHandle = setInterval(() => {
-    quizTimeLeft -= 1;
-    quizTimerEl.textContent = String(Math.max(quizTimeLeft, 0));
-    quizTimerBar.style.width = `${(quizTimeLeft / QUIZ_TIME_PER_QUESTION) * 100}%`;
-
-    if (quizTimeLeft <= 0) {
-      stopQuizTimer();
-      if (!quizAnswered) handleQuizAnswer(-1); // waktu habis = tidak menjawab
-    }
+/** Timer per soal: berkurang tiap detik, habis = dianggap salah */
+function startTimer() {
+  stopTimer();
+  quiz.timeLeft = QUIZ_TIME;
+  updateTimerUI();
+  quiz.timerId = setInterval(() => {
+    // Jeda otomatis jika pengguna sedang membuka tab lain
+    if (panels.quiz.classList.contains("hidden")) return;
+    quiz.timeLeft -= 1;
+    updateTimerUI();
+    if (quiz.timeLeft <= 0) handleAnswer(-1);
   }, 1000);
 }
 
-function renderQuizQuestion() {
-  quizAnswered = false;
-  quizFeedback.classList.add("hidden-panel");
-  quizNextBtn.classList.add("hidden-panel");
-
-  const q = QUIZ_QUESTIONS[quizIndex];
-  quizCurrentNum.textContent = String(quizIndex + 1);
-  quizQuestionText.textContent = q.question;
-
-  quizOptionsWrap.innerHTML = "";
-  q.options.forEach((opt, idx) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className =
-      "quiz-option w-full text-left rounded-lg border border-slate-300 px-4 py-2.5 text-sm hover:bg-violet-50 hover:border-violet-300 transition";
-    btn.textContent = opt;
-    btn.addEventListener("click", () => handleQuizAnswer(idx));
-    quizOptionsWrap.appendChild(btn);
-  });
-
-  startQuizTimer();
+/** Reset state lalu mulai dari soal pertama */
+function startQuiz() {
+  stopTimer();
+  quiz.index = 0;
+  quiz.score = 0;
+  quiz.answered = false;
+  quiz.answers = [];
+  quiz.results = [];
+  showQuizView("play");
+  renderQuestion();
 }
 
-function handleQuizAnswer(selectedIdx) {
-  if (quizAnswered) return;
-  quizAnswered = true;
-  stopQuizTimer();
+/** Render soal aktif berdasarkan state */
+function renderQuestion() {
+  const item = QUESTIONS[quiz.index];
+  quiz.answered = false;
 
-  const q = QUIZ_QUESTIONS[quizIndex];
-  const isCorrect = selectedIdx === q.answer;
-  if (isCorrect) quizScore += 1;
+  quizProgressLabel.textContent = `Soal ${quiz.index + 1} dari ${QUESTIONS.length}`;
+  quizLiveScore.textContent = String(quiz.score);
+  quizQuestion.textContent = item.q;
 
-  const optionButtons = $all(".quiz-option");
-  optionButtons.forEach((btn, idx) => {
+  quizFeedback.classList.add("hidden");
+  quizNext.classList.add("hidden");
+  quizOptions.innerHTML = "";
+
+  item.options.forEach((text, i) => {
+    const btn = h("button",
+      "quiz-option flex items-center gap-3 text-left rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium hover:border-indigo-500 hover:bg-indigo-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition");
+    btn.type = "button";
+    btn.append(
+      h("span", "badge bg-slate-100 text-slate-700 shrink-0", String.fromCharCode(65 + i)),
+      h("span", "", text)
+    );
+    btn.addEventListener("click", () => handleAnswer(i));
+    quizOptions.append(btn);
+  });
+
+  startTimer();
+}
+
+/** Nilai jawaban. choice = -1 berarti waktu habis. */
+function handleAnswer(choice) {
+  if (quiz.answered) return;
+  quiz.answered = true;
+  stopTimer();
+
+  const item = QUESTIONS[quiz.index];
+  const correct = choice === item.answer;
+  const timeout = choice === -1;
+
+  if (correct) quiz.score += 1;
+  quiz.answers.push(choice);
+  quiz.results.push(correct ? "benar" : timeout ? "waktu habis" : "salah");
+  quizLiveScore.textContent = String(quiz.score);
+
+  // Tandai opsi benar / salah dan kunci semua tombol
+  $all(".quiz-option", quizOptions).forEach((btn, i) => {
     btn.disabled = true;
-    if (idx === q.answer) {
-      btn.classList.add("bg-emerald-100", "border-emerald-400", "text-emerald-800");
-    } else if (idx === selectedIdx) {
-      btn.classList.add("bg-rose-100", "border-rose-400", "text-rose-800");
+    btn.classList.remove("hover:border-indigo-500", "hover:bg-indigo-50");
+    if (i === item.answer) {
+      btn.classList.replace("border-slate-300", "border-emerald-500");
+      btn.classList.replace("bg-white", "bg-emerald-50");
+    } else if (i === choice) {
+      btn.classList.replace("border-slate-300", "border-rose-500");
+      btn.classList.replace("bg-white", "bg-rose-50");
+    } else {
+      btn.classList.add("opacity-60");
     }
   });
 
-  quizFeedback.classList.remove("hidden-panel");
-  if (isCorrect) {
-    quizFeedback.className = "rounded-lg px-3 py-2 mb-3 text-sm bg-emerald-50 border border-emerald-200 text-emerald-800";
-    quizFeedback.textContent = "Benar!";
-  } else if (selectedIdx === -1) {
-    quizFeedback.className = "rounded-lg px-3 py-2 mb-3 text-sm bg-amber-50 border border-amber-200 text-amber-800";
-    quizFeedback.textContent = `Waktu habis. Jawaban benar: ${q.options[q.answer]}`;
-  } else {
-    quizFeedback.className = "rounded-lg px-3 py-2 mb-3 text-sm bg-rose-50 border border-rose-200 text-rose-800";
-    quizFeedback.textContent = `Salah. Jawaban benar: ${q.options[q.answer]}`;
-  }
+  // Feedback singkat
+  const answerText = item.options[item.answer];
+  const message = correct
+    ? "Benar! Jawabanmu tepat."
+    : timeout
+      ? `Waktu habis. Jawaban yang benar: ${answerText}`
+      : `Kurang tepat. Jawaban yang benar: ${answerText}`;
+  quizFeedback.className = `alert-box ${
+    correct ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-rose-200 bg-rose-50 text-rose-900"
+  }`;
+  quizFeedback.innerHTML = "";
+  quizFeedback.append(
+    h("i", `ti ${correct ? "ti-circle-check" : "ti-circle-x"} text-lg shrink-0`),
+    h("span", "", message)
+  );
 
-  const isLast = quizIndex === QUIZ_QUESTIONS.length - 1;
-  quizNextBtn.innerHTML = isLast
-    ? icon("flag") + " Lihat Hasil"
-    : "Lanjut " + icon("arrow-right");
-  quizNextBtn.classList.remove("hidden-panel");
+  const isLast = quiz.index === QUESTIONS.length - 1;
+  quizNext.innerHTML = isLast
+    ? 'Lihat hasil <i class="ti ti-flag-check"></i>'
+    : 'Soal berikutnya <i class="ti ti-arrow-right"></i>';
+  quizNext.classList.remove("hidden");
+  quizNext.focus();
 }
 
-quizNextBtn.addEventListener("click", () => {
-  const isLast = quizIndex === QUIZ_QUESTIONS.length - 1;
-  if (isLast) {
-    finishQuiz();
-  } else {
-    quizIndex += 1;
-    renderQuizQuestion();
-  }
+quizNext.addEventListener("click", () => {
+  if (!quiz.answered) return;
+  quiz.index += 1;
+  if (quiz.index >= QUESTIONS.length) finishQuiz();
+  else renderQuestion();
 });
 
+/** Tampilkan skor akhir dan perbarui skor terbaik */
 function finishQuiz() {
-  quizQuestionScreen.classList.add("hidden-panel");
-  quizResultScreen.classList.remove("hidden-panel");
+  stopTimer();
+  showQuizView("result");
 
-  $("#quiz-final-score").textContent = `${quizScore} / ${QUIZ_QUESTIONS.length}`;
+  const total = QUESTIONS.length;
+  $("#quiz-final-score").textContent = `${quiz.score} / ${total}`;
 
-  const top = getQuizHighscore();
-  let message = "Terus berlatih ya!";
-  if (top === null || quizScore > top) {
-    localStorage.setItem(QUIZ_HIGHSCORE_KEY, String(quizScore));
-    message = "Rekor baru! 🎉";
-  } else if (quizScore === top) {
-    message = "Menyamai rekor terbaikmu!";
+  const previous = getHighScore();
+  let message;
+  if (previous === null || quiz.score > previous) {
+    localStorage.setItem(KEYS.quizHigh, String(quiz.score));
+    message = previous === null
+      ? "Skor pertamamu tersimpan sebagai skor terbaik."
+      : `Rekor baru! Skor terbaik sebelumnya ${previous} / ${total}.`;
+  } else {
+    message = `Skor terbaikmu masih ${previous} / ${total}. Coba lagi untuk melampauinya.`;
   }
-  $("#quiz-result-message").textContent = message;
-  showQuizHighscore();
+  $("#quiz-final-message").textContent = message;
+
+  // Ringkasan jumlah benar / salah / waktu habis
+  const count = (label) => quiz.results.filter((r) => r === label).length;
+  const stats = [
+    ["Benar", count("benar"), "bg-emerald-50 text-emerald-800 border-emerald-200"],
+    ["Salah", count("salah"), "bg-rose-50 text-rose-800 border-rose-200"],
+    ["Waktu habis", count("waktu habis"), "bg-amber-50 text-amber-800 border-amber-200"],
+  ];
+  const statsEl = $("#quiz-stats");
+  statsEl.innerHTML = "";
+  stats.forEach(([label, value, style]) => {
+    const li = h("li", `rounded-xl border px-3 py-2 ${style}`);
+    li.append(h("p", "font-display text-xl font-bold", String(value)), h("p", "text-xs", label));
+    statsEl.append(li);
+  });
+
+  showHighScore();
 }
 
-quizStartBtn.addEventListener("click", startQuiz);
-quizRestartBtn.addEventListener("click", startQuiz);
+$("#quiz-start-btn").addEventListener("click", startQuiz);
+$("#quiz-retry").addEventListener("click", startQuiz);
 
-/* Escape menutup modal yang sedang terbuka */
-document.addEventListener("keydown", (e) => {
-  if (e.key !== "Escape") return;
-  ["modal-edit-expense", "modal-delete-expense", "modal-edit-bookmark", "modal-delete-bookmark"].forEach((id) => {
-    const modal = document.getElementById(id);
-    if (modal && !modal.classList.contains("hidden-panel")) closeModal(modal);
-  });
-});
+/* =====================================================================
+   7. INISIALISASI
+   ===================================================================== */
+
+renderExpenses();
+renderBookmarks();
+showHighScore();
+showQuizView("start");
+
+// Pulihkan tab terakhir yang dibuka (default: expense)
+let savedTab = "expense";
+try {
+  savedTab = localStorage.getItem(KEYS.tab) || "expense";
+} catch {
+  /* abaikan */
+}
+switchTab(savedTab);

@@ -3,157 +3,165 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Trio Digital: catatan pengeluaran harian, pengelola bookmark, dan kuis interaktif dalam satu halaman. Studi kasus Praktikum 3 PABWE." />
-  <title>Trio Digital — Studi Kasus PABWE P3</title>
+  <title>DompetKu — Praktikum 3 PABWE</title>
 
+  <!-- Tailwind CSS (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Figtree", "sans-serif"],
+            display: ["Bricolage Grotesque", "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Figtree:wght@400;500;600;700&display=swap"
     rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap"
-    media="print"
-    onload="this.media='all'"
   />
-  <noscript>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" />
-  </noscript>
 
-  <style>
-*,:after,:before{--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000}*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}:after,:before{--tw-content:""}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0}fieldset,legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.inset-0{inset:0}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:.25rem}.mb-2{margin-bottom:.5rem}.mb-3{margin-bottom:.75rem}.mb-4{margin-bottom:1rem}.mb-5{margin-bottom:1.25rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.mt-0\.5{margin-top:.125rem}.mt-1{margin-top:.25rem}.mt-2{margin-top:.5rem}.mt-4{margin-top:1rem}.mt-8{margin-top:2rem}.block{display:block}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.h-1\.5{height:.375rem}.h-full{height:100%}.min-h-screen{min-height:100vh}.w-full{width:100%}.min-w-0{min-width:0}.min-w-\[100px\]{min-width:100px}.max-w-4xl{max-width:56rem}.max-w-md{max-width:28rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-end{justify-content:flex-end}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1{gap:.25rem}.gap-1\.5{gap:.375rem}.gap-2{gap:.5rem}.gap-3{gap:.75rem}.space-y-2>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.5rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.5rem*var(--tw-space-y-reverse))}.space-y-3>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.75rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.75rem*var(--tw-space-y-reverse))}.space-y-5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.25rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.25rem*var(--tw-space-y-reverse))}.overflow-hidden,.truncate{overflow:hidden}.truncate{text-overflow:ellipsis}.truncate,.whitespace-nowrap{white-space:nowrap}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:.5rem}.rounded-md{border-radius:.375rem}.rounded-xl{border-radius:.75rem}.border{border-width:1px}.border-amber-200{--tw-border-opacity:1;border-color:rgb(253 230 138/var(--tw-border-opacity,1))}.border-emerald-200{--tw-border-opacity:1;border-color:rgb(167 243 208/var(--tw-border-opacity,1))}.border-emerald-400{--tw-border-opacity:1;border-color:rgb(52 211 153/var(--tw-border-opacity,1))}.border-indigo-200{--tw-border-opacity:1;border-color:rgb(199 210 254/var(--tw-border-opacity,1))}.border-rose-200{--tw-border-opacity:1;border-color:rgb(254 205 211/var(--tw-border-opacity,1))}.border-rose-400{--tw-border-opacity:1;border-color:rgb(251 113 133/var(--tw-border-opacity,1))}.border-slate-200{--tw-border-opacity:1;border-color:rgb(226 232 240/var(--tw-border-opacity,1))}.border-slate-300{--tw-border-opacity:1;border-color:rgb(203 213 225/var(--tw-border-opacity,1))}.bg-amber-50{--tw-bg-opacity:1;background-color:rgb(255 251 235/var(--tw-bg-opacity,1))}.bg-emerald-100{--tw-bg-opacity:1;background-color:rgb(209 250 229/var(--tw-bg-opacity,1))}.bg-emerald-50{--tw-bg-opacity:1;background-color:rgb(236 253 245/var(--tw-bg-opacity,1))}.bg-indigo-50{--tw-bg-opacity:1;background-color:rgb(238 242 255/var(--tw-bg-opacity,1))}.bg-indigo-700{--tw-bg-opacity:1;background-color:rgb(67 56 202/var(--tw-bg-opacity,1))}.bg-rose-100{--tw-bg-opacity:1;background-color:rgb(255 228 230/var(--tw-bg-opacity,1))}.bg-rose-50{--tw-bg-opacity:1;background-color:rgb(255 241 242/var(--tw-bg-opacity,1))}.bg-rose-700{--tw-bg-opacity:1;background-color:rgb(190 18 60/var(--tw-bg-opacity,1))}.bg-sky-100{--tw-bg-opacity:1;background-color:rgb(224 242 254/var(--tw-bg-opacity,1))}.bg-sky-700{--tw-bg-opacity:1;background-color:rgb(3 105 161/var(--tw-bg-opacity,1))}.bg-slate-100{--tw-bg-opacity:1;background-color:rgb(241 245 249/var(--tw-bg-opacity,1))}.bg-slate-50{--tw-bg-opacity:1;background-color:rgb(248 250 252/var(--tw-bg-opacity,1))}.bg-slate-900\/40{background-color:rgba(15,23,42,.4)}.bg-violet-500{--tw-bg-opacity:1;background-color:rgb(139 92 246/var(--tw-bg-opacity,1))}.bg-violet-700{--tw-bg-opacity:1;background-color:rgb(109 40 217/var(--tw-bg-opacity,1))}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1))}.bg-white\/80{background-color:hsla(0,0%,100%,.8)}.p-1{padding:.25rem}.p-1\.5{padding:.375rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.px-2{padding-left:.5rem;padding-right:.5rem}.px-2\.5{padding-left:.625rem;padding-right:.625rem}.px-3{padding-left:.75rem;padding-right:.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.py-0\.5{padding-top:.125rem;padding-bottom:.125rem}.py-1\.5{padding-top:.375rem;padding-bottom:.375rem}.py-10{padding-top:2.5rem;padding-bottom:2.5rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-2\.5{padding-top:.625rem;padding-bottom:.625rem}.py-3{padding-top:.75rem;padding-bottom:.75rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.py-8{padding-top:2rem;padding-bottom:2rem}.pt-1{padding-top:.25rem}.text-left{text-align:left}.text-center{text-align:center}.font-display{font-family:Poppins,Inter,system-ui,sans-serif}.font-sans{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-4xl{font-size:2.25rem;line-height:2.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.italic{font-style:italic}.tracking-tight{letter-spacing:-.025em}.tracking-wide{letter-spacing:.025em}.text-amber-800{--tw-text-opacity:1;color:rgb(146 64 14/var(--tw-text-opacity,1))}.text-amber-900{--tw-text-opacity:1;color:rgb(120 53 15/var(--tw-text-opacity,1))}.text-emerald-700{--tw-text-opacity:1;color:rgb(4 120 87/var(--tw-text-opacity,1))}.text-emerald-800{--tw-text-opacity:1;color:rgb(6 95 70/var(--tw-text-opacity,1))}.text-indigo-600{--tw-text-opacity:1;color:rgb(79 70 229/var(--tw-text-opacity,1))}.text-indigo-700{--tw-text-opacity:1;color:rgb(67 56 202/var(--tw-text-opacity,1))}.text-indigo-800{--tw-text-opacity:1;color:rgb(55 48 163/var(--tw-text-opacity,1))}.text-rose-700{--tw-text-opacity:1;color:rgb(190 18 60/var(--tw-text-opacity,1))}.text-rose-800{--tw-text-opacity:1;color:rgb(159 18 57/var(--tw-text-opacity,1))}.text-sky-700{--tw-text-opacity:1;color:rgb(3 105 161/var(--tw-text-opacity,1))}.text-sky-800{--tw-text-opacity:1;color:rgb(7 89 133/var(--tw-text-opacity,1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139/var(--tw-text-opacity,1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105/var(--tw-text-opacity,1))}.text-slate-700{--tw-text-opacity:1;color:rgb(51 65 85/var(--tw-text-opacity,1))}.text-slate-800{--tw-text-opacity:1;color:rgb(30 41 59/var(--tw-text-opacity,1))}.text-slate-900{--tw-text-opacity:1;color:rgb(15 23 42/var(--tw-text-opacity,1))}.text-violet-700{--tw-text-opacity:1;color:rgb(109 40 217/var(--tw-text-opacity,1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.shadow{--tw-shadow:0 1px 3px 0 rgba(0,0,0,.1),0 1px 2px -1px rgba(0,0,0,.1);--tw-shadow-colored:0 1px 3px 0 var(--tw-shadow-color),0 1px 2px -1px var(--tw-shadow-color)}.shadow,.shadow-sm{box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgba(0,0,0,.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color),0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,-webkit-backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter,-webkit-backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.duration-1000{transition-duration:1s}.hover\:border-violet-300:hover{--tw-border-opacity:1;border-color:rgb(196 181 253/var(--tw-border-opacity,1))}.hover\:bg-indigo-800:hover{--tw-bg-opacity:1;background-color:rgb(55 48 163/var(--tw-bg-opacity,1))}.hover\:bg-rose-50:hover{--tw-bg-opacity:1;background-color:rgb(255 241 242/var(--tw-bg-opacity,1))}.hover\:bg-rose-800:hover{--tw-bg-opacity:1;background-color:rgb(159 18 57/var(--tw-bg-opacity,1))}.hover\:bg-sky-800:hover{--tw-bg-opacity:1;background-color:rgb(7 89 133/var(--tw-bg-opacity,1))}.hover\:bg-slate-100:hover{--tw-bg-opacity:1;background-color:rgb(241 245 249/var(--tw-bg-opacity,1))}.hover\:bg-slate-50:hover{--tw-bg-opacity:1;background-color:rgb(248 250 252/var(--tw-bg-opacity,1))}.hover\:bg-violet-50:hover{--tw-bg-opacity:1;background-color:rgb(245 243 255/var(--tw-bg-opacity,1))}.hover\:bg-violet-800:hover{--tw-bg-opacity:1;background-color:rgb(91 33 182/var(--tw-bg-opacity,1))}.hover\:underline:hover{text-decoration-line:underline}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.focus\:ring-2:focus{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow,0 0 #0000)}.focus\:ring-indigo-500:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(99 102 241/var(--tw-ring-opacity,1))}.focus\:ring-sky-500:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(14 165 233/var(--tw-ring-opacity,1))}@media (min-width:640px){.sm\:col-span-2{grid-column:span 2/span 2}.sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.sm\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.sm\:flex-row{flex-direction:row}.sm\:items-center{align-items:center}.sm\:p-6{padding:1.5rem}.sm\:py-14{padding-top:3.5rem;padding-bottom:3.5rem}.sm\:text-4xl{font-size:2.25rem;line-height:2.5rem}}
-    body {
-      background:
-        radial-gradient(ellipse 80% 50% at 15% -10%, #e0e7ff 0%, transparent 55%),
-        radial-gradient(ellipse 60% 40% at 95% 5%, #d1fae5 0%, transparent 50%),
-        #f8fafc;
+  <!-- Tabler Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+
+  <!-- Komponen kecil agar tampilan konsisten antar tab -->
+  <style type="text/tailwindcss">
+    @layer components {
+      .field { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500; }
+      .label { @apply block text-sm font-medium text-slate-700 mb-1; }
+      .btn { @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500; }
+      .btn-primary { @apply bg-indigo-700 text-white hover:bg-indigo-800; }
+      .btn-outline { @apply border border-slate-300 text-slate-700 hover:bg-slate-50; }
+      .btn-danger { @apply bg-rose-600 text-white hover:bg-rose-700; }
+      .btn-sm { @apply px-2.5 py-1.5 text-xs; }
+      .card { @apply bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm; }
+      .badge { @apply inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md; }
+      .alert-box { @apply rounded-xl border px-4 py-3 text-sm flex items-start gap-2; }
     }
-    .hidden-panel { display: none !important; }
-    .icon {
-      width: 1em; height: 1em; flex-shrink: 0;
-      fill: none; stroke: currentColor; stroke-width: 2;
-      stroke-linecap: round; stroke-linejoin: round;
-    }
+    body { background: #eef1f7; }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
   </style>
 </head>
-<body class="font-sans text-slate-800 min-h-screen">
 
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"/></symbol>
-    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
-    <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
-    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
-    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
-    <symbol id="i-play" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></symbol>
-    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
-    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
-    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
-    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
-    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></symbol>
-    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
-    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></symbol>
-  </svg>
+<body class="font-sans text-slate-800 min-h-screen flex flex-col">
+  <div class="w-full max-w-3xl mx-auto px-4 py-8 sm:py-12 flex-1">
 
-  <div class="max-w-4xl mx-auto px-4 py-10 sm:py-14">
-
-    <header class="mb-8">
-      <p class="text-sm font-medium text-indigo-700 mb-1">Praktikum 3 · PABWE</p>
-      <h1 class="font-display text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">Trio Digital</h1>
-      <p class="mt-2 text-slate-600">Tiga fitur dalam satu halaman: DompetKu (catatan keuangan), LinkVault (bookmark), dan KuisKilat (kuis interaktif).</p>
+    <!-- Header -->
+    <header class="mb-7">
+      <p class="text-sm font-medium text-indigo-700 mb-1">Praktikum 3 PABWE</p>
+      <h1 class="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+        DompetKu
+      </h1>
+      <p class="mt-2 text-slate-600 max-w-prose">
+        Catat keuangan harian, simpan tautan penting, dan uji dasar web lewat kuis, semuanya dalam satu aplikasi.
+      </p>
     </header>
 
-    <nav aria-label="Navigasi fitur">
-      <div class="flex flex-wrap gap-1 p-1 bg-white/80 border border-slate-200 rounded-xl shadow-sm mb-6" role="tablist" aria-label="Pilih fitur">
-        <button type="button" role="tab" id="tab-expense" data-tab="expense" aria-controls="panel-expense" aria-selected="true"
-          class="tab-btn flex-1 min-w-[100px] flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition">
-          <svg class="icon text-lg" aria-hidden="true"><use href="#i-wallet"/></svg><span>DompetKu</span>
-        </button>
-        <button type="button" role="tab" id="tab-bookmark" data-tab="bookmark" aria-controls="panel-bookmark" aria-selected="false" tabindex="-1"
-          class="tab-btn flex-1 min-w-[100px] flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition">
-          <svg class="icon text-lg" aria-hidden="true"><use href="#i-bookmark"/></svg><span>LinkVault</span>
-        </button>
-        <button type="button" role="tab" id="tab-quiz" data-tab="quiz" aria-controls="panel-quiz" aria-selected="false" tabindex="-1"
-          class="tab-btn flex-1 min-w-[100px] flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition">
-          <svg class="icon text-lg" aria-hidden="true"><use href="#i-zap"/></svg><span>KuisKilat</span>
-        </button>
-      </div>
+    <!-- Navigasi tab -->
+    <nav class="flex gap-1 p-1 bg-white border border-slate-200 rounded-xl shadow-sm mb-6" role="tablist" aria-label="Fitur aplikasi">
+      <button type="button" role="tab" data-tab="expense" aria-selected="true"
+        class="tab-btn flex-1 flex items-center justify-center gap-2 px-2 sm:px-3 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition bg-indigo-700 text-white shadow">
+        <i class="ti ti-wallet text-lg"></i>
+        <span class="hidden sm:inline">Pengeluaran</span><span class="sm:hidden">Uang</span>
+      </button>
+      <button type="button" role="tab" data-tab="bookmark" aria-selected="false"
+        class="tab-btn flex-1 flex items-center justify-center gap-2 px-2 sm:px-3 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition text-slate-600 hover:bg-slate-100">
+        <i class="ti ti-bookmarks text-lg"></i>
+        <span class="hidden sm:inline">Bookmark</span><span class="sm:hidden">Link</span>
+      </button>
+      <button type="button" role="tab" data-tab="quiz" aria-selected="false"
+        class="tab-btn flex-1 flex items-center justify-center gap-2 px-2 sm:px-3 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition text-slate-600 hover:bg-slate-100">
+        <i class="ti ti-bulb text-lg"></i>
+        <span>Kuis</span>
+      </button>
     </nav>
 
     <main>
-      <!-- ========== TAB 1: EXPENSE TRACKER ========== -->
-      <section id="panel-expense" role="tabpanel" aria-labelledby="tab-expense" class="tab-panel space-y-5">
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm">
-          <h2 class="font-display text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <svg class="icon text-indigo-600" aria-hidden="true"><use href="#i-wallet"/></svg> DompetKu — Catatan Pengeluaran Harian
+      <!-- ================= TAB 1: EXPENSE TRACKER ================= -->
+      <section id="panel-expense" class="space-y-5" role="tabpanel" aria-labelledby="expense-heading">
+        <!-- Ringkasan -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <p class="text-xs font-medium text-emerald-800">Total pemasukan</p>
+            <p id="sum-income" class="font-display text-xl font-bold text-emerald-900 truncate">Rp0</p>
+          </div>
+          <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+            <p class="text-xs font-medium text-rose-800">Total pengeluaran</p>
+            <p id="sum-expense" class="font-display text-xl font-bold text-rose-900 truncate">Rp0</p>
+          </div>
+          <div class="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
+            <p class="text-xs font-medium text-indigo-800">Saldo</p>
+            <p id="sum-balance" class="font-display text-xl font-bold text-indigo-900 truncate">Rp0</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 id="expense-heading" class="font-display text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <i class="ti ti-receipt text-indigo-700"></i> Catatan Pengeluaran Harian
           </h2>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-            <div class="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3">
-              <p class="text-xs uppercase tracking-wide text-emerald-800 font-medium">Pemasukan</p>
-              <p id="expense-total-income" class="font-display text-xl font-bold text-emerald-800">Rp 0</p>
+          <!-- Form tambah transaksi -->
+          <form id="expense-form" class="grid grid-cols-1 sm:grid-cols-6 gap-3 mb-2" novalidate>
+            <div class="sm:col-span-4">
+              <label for="expense-title" class="label">Judul / deskripsi</label>
+              <input type="text" id="expense-title" class="field" placeholder="Contoh: Makan siang di kantin" />
             </div>
-            <div class="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3">
-              <p class="text-xs uppercase tracking-wide text-rose-800 font-medium">Pengeluaran</p>
-              <p id="expense-total-outcome" class="font-display text-xl font-bold text-rose-800">Rp 0</p>
+            <div class="sm:col-span-2">
+              <label for="expense-amount" class="label">Jumlah (Rp)</label>
+              <input type="number" id="expense-amount" class="field" min="0" step="any" inputmode="decimal" placeholder="15000" />
             </div>
-            <div class="rounded-xl bg-indigo-50 border border-indigo-200 px-4 py-3">
-              <p class="text-xs uppercase tracking-wide text-indigo-800 font-medium">Saldo</p>
-              <p id="expense-balance" class="font-display text-xl font-bold text-indigo-800">Rp 0</p>
-            </div>
-          </div>
-
-          <form id="expense-form" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
-            <div>
-              <label for="expense-title" class="sr-only">Judul atau deskripsi transaksi</label>
-              <input type="text" id="expense-title" placeholder="Judul/deskripsi..." class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            </div>
-            <div>
-              <label for="expense-category" class="sr-only">Kategori</label>
-              <select id="expense-category" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="">Pilih kategori</option>
-                <option value="Makanan">Makanan</option>
-                <option value="Transportasi">Transportasi</option>
-                <option value="Belanja">Belanja</option>
-                <option value="Hiburan">Hiburan</option>
-                <option value="Gaji">Gaji</option>
-                <option value="Lainnya">Lainnya</option>
-              </select>
-            </div>
-            <div>
-              <label for="expense-amount" class="sr-only">Jumlah dalam rupiah</label>
-              <input type="number" id="expense-amount" placeholder="Jumlah (Rp)" min="1" step="1" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            </div>
-            <div>
-              <label for="expense-type" class="sr-only">Tipe transaksi</label>
-              <select id="expense-type" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <div class="sm:col-span-2">
+              <label for="expense-type" class="label">Tipe</label>
+              <select id="expense-type" class="field">
                 <option value="Pengeluaran">Pengeluaran</option>
                 <option value="Pemasukan">Pemasukan</option>
               </select>
             </div>
-            <div>
-              <label for="expense-date" class="sr-only">Tanggal transaksi</label>
-              <input type="date" id="expense-date" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <div class="sm:col-span-2">
+              <label for="expense-category" class="label">Kategori</label>
+              <select id="expense-category" class="field"></select>
             </div>
-            <button type="submit" class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white text-sm font-semibold px-4 py-2.5 transition">
-              <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg> Tambah Transaksi
-            </button>
+            <div class="sm:col-span-2">
+              <label for="expense-date" class="label">Tanggal</label>
+              <input type="date" id="expense-date" class="field" />
+            </div>
+            <div class="sm:col-span-6">
+              <p id="expense-error" class="hidden alert-box border-rose-200 bg-rose-50 text-rose-900 mb-3" role="alert"></p>
+              <button type="submit" class="btn btn-primary w-full sm:w-auto"><i class="ti ti-plus"></i> Tambah transaksi</button>
+            </div>
           </form>
-          <p id="expense-error" role="alert" class="hidden-panel text-sm text-rose-700 mb-3"></p>
+        </div>
 
-          <div class="flex flex-col sm:flex-row gap-3 mb-4 mt-4">
-            <div class="flex-1">
-              <label for="expense-search" class="sr-only">Cari transaksi berdasarkan judul</label>
-              <input type="search" id="expense-search" placeholder="Cari judul..." class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        <div class="card">
+          <!-- Cari, filter, sort -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4">
+            <div class="relative sm:col-span-4">
+              <i class="ti ti-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+              <label for="expense-search" class="sr-only">Cari transaksi</label>
+              <input type="search" id="expense-search" class="field pl-9" placeholder="Cari berdasarkan judul..." />
             </div>
             <div>
-              <label for="expense-filter-type" class="sr-only">Filter tipe transaksi</label>
-              <select id="expense-filter-type" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <label for="expense-filter-type" class="sr-only">Filter tipe</label>
+              <select id="expense-filter-type" class="field">
                 <option value="all">Semua tipe</option>
                 <option value="Pemasukan">Pemasukan</option>
                 <option value="Pengeluaran">Pengeluaran</option>
               </select>
             </div>
             <div>
-              <label for="expense-sort" class="sr-only">Urutkan transaksi</label>
-              <select id="expense-sort" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <label for="expense-filter-category" class="sr-only">Filter kategori</label>
+              <select id="expense-filter-category" class="field"></select>
+            </div>
+            <div class="sm:col-span-2">
+              <label for="expense-sort" class="sr-only">Urutkan</label>
+              <select id="expense-sort" class="field">
                 <option value="newest">Terbaru</option>
                 <option value="oldest">Terlama</option>
                 <option value="amount-desc">Jumlah terbesar</option>
@@ -162,53 +170,56 @@
             </div>
           </div>
 
-          <div id="expense-empty" role="status" class="hidden-panel rounded-xl border border-amber-200 bg-amber-50 text-amber-900 px-4 py-3 text-sm flex items-start gap-2">
-            <svg class="icon text-lg mt-0.5" aria-hidden="true"><use href="#i-alert"/></svg>
-            <span>Belum ada transaksi. Tambahkan transaksi baru untuk memulai.</span>
+          <!-- Empty state -->
+          <div id="expense-empty" class="hidden alert-box border-amber-200 bg-amber-50 text-amber-900" role="alert">
+            <i class="ti ti-alert-circle text-lg mt-0.5 shrink-0"></i>
+            <span>Belum ada transaksi. Isi form di atas untuk mencatat transaksi pertamamu.</span>
           </div>
-
           <ul id="expense-list" class="space-y-2"></ul>
         </div>
       </section>
 
-      <!-- ========== TAB 2: BOOKMARK MANAGER ========== -->
-      <section id="panel-bookmark" role="tabpanel" aria-labelledby="tab-bookmark" class="tab-panel hidden-panel space-y-5">
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm">
-          <h2 class="font-display text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <svg class="icon text-sky-700" aria-hidden="true"><use href="#i-bookmark"/></svg> LinkVault — Bookmark / Link Manager
+      <!-- ================= TAB 2: BOOKMARK MANAGER ================= -->
+      <section id="panel-bookmark" class="hidden space-y-5" role="tabpanel" aria-labelledby="bookmark-heading">
+        <div class="card">
+          <h2 id="bookmark-heading" class="font-display text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <i class="ti ti-link text-indigo-700"></i> Bookmark / Link Manager
           </h2>
 
-          <form id="bookmark-form" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+          <form id="bookmark-form" class="grid grid-cols-1 sm:grid-cols-2 gap-3" novalidate>
             <div>
-              <label for="bookmark-name" class="sr-only">Nama bookmark</label>
-              <input type="text" id="bookmark-name" placeholder="Nama/judul..." class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              <label for="bookmark-title" class="label">Nama / judul</label>
+              <input type="text" id="bookmark-title" class="field" placeholder="Contoh: Dokumentasi JavaScript" />
             </div>
             <div>
-              <label for="bookmark-url" class="sr-only">URL bookmark</label>
-              <input type="text" id="bookmark-url" placeholder="https://contoh.com" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              <label for="bookmark-category" class="label">Kategori / tag</label>
+              <input type="text" id="bookmark-category" class="field" placeholder="Contoh: Belajar" />
             </div>
-            <div>
-              <label for="bookmark-category" class="sr-only">Kategori atau tag</label>
-              <input type="text" id="bookmark-category" placeholder="Kategori/tag (misal: Belajar)" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
+            <div class="sm:col-span-2">
+              <label for="bookmark-url" class="label">URL</label>
+              <input type="text" id="bookmark-url" class="field" inputmode="url" placeholder="https://developer.mozilla.org/" />
             </div>
-            <div>
-              <label for="bookmark-note" class="sr-only">Catatan singkat</label>
-              <input type="text" id="bookmark-note" placeholder="Catatan singkat (opsional)" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
+            <div class="sm:col-span-2">
+              <label for="bookmark-note" class="label">Catatan singkat (opsional)</label>
+              <input type="text" id="bookmark-note" class="field" placeholder="Referensi untuk tugas PABWE" />
             </div>
-            <button type="submit" class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-sky-700 hover:bg-sky-800 text-white text-sm font-semibold px-4 py-2.5 transition sm:col-span-2">
-              <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg> Simpan Bookmark
-            </button>
+            <div class="sm:col-span-2">
+              <p id="bookmark-error" class="hidden alert-box border-rose-200 bg-rose-50 text-rose-900 mb-3" role="alert"></p>
+              <button type="submit" class="btn btn-primary w-full sm:w-auto"><i class="ti ti-bookmark-plus"></i> Simpan bookmark</button>
+            </div>
           </form>
-          <p id="bookmark-error" role="alert" class="hidden-panel text-sm text-rose-700 mb-3"></p>
+        </div>
 
-          <div class="flex flex-col sm:flex-row gap-3 mb-4 mt-4">
-            <div class="flex-1">
+        <div class="card">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+            <div class="relative sm:col-span-2">
+              <i class="ti ti-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
               <label for="bookmark-search" class="sr-only">Cari bookmark</label>
-              <input type="search" id="bookmark-search" placeholder="Cari nama / URL / kategori..." class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              <input type="search" id="bookmark-search" class="field pl-9" placeholder="Cari nama, URL, atau kategori..." />
             </div>
             <div>
-              <label for="bookmark-sort" class="sr-only">Urutkan bookmark</label>
-              <select id="bookmark-sort" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+              <label for="bookmark-sort" class="sr-only">Urutkan</label>
+              <select id="bookmark-sort" class="field">
                 <option value="newest">Terbaru</option>
                 <option value="title-asc">Judul A–Z</option>
                 <option value="title-desc">Judul Z–A</option>
@@ -216,153 +227,139 @@
             </div>
           </div>
 
-          <div id="bookmark-empty" role="status" class="hidden-panel rounded-xl border border-amber-200 bg-amber-50 text-amber-900 px-4 py-3 text-sm flex items-start gap-2">
-            <svg class="icon text-lg mt-0.5" aria-hidden="true"><use href="#i-alert"/></svg>
-            <span>Belum ada bookmark tersimpan.</span>
+          <div id="bookmark-empty" class="hidden alert-box border-amber-200 bg-amber-50 text-amber-900" role="alert">
+            <i class="ti ti-alert-circle text-lg mt-0.5 shrink-0"></i>
+            <span>Belum ada bookmark. Simpan tautan pertamamu lewat form di atas.</span>
           </div>
-
           <ul id="bookmark-list" class="space-y-2"></ul>
         </div>
       </section>
 
-      <!-- ========== TAB 3: QUIZ APP ========== -->
-      <section id="panel-quiz" role="tabpanel" aria-labelledby="tab-quiz" class="tab-panel hidden-panel space-y-5">
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm">
-          <h2 class="font-display text-xl font-semibold text-slate-900 mb-2 flex items-center gap-2">
-            <svg class="icon text-violet-700" aria-hidden="true"><use href="#i-zap"/></svg> KuisKilat — Kuis Dasar Web
+      <!-- ================= TAB 3: QUIZ ================= -->
+      <section id="panel-quiz" class="hidden space-y-5" role="tabpanel" aria-labelledby="quiz-heading">
+        <div class="card">
+          <h2 id="quiz-heading" class="font-display text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <i class="ti ti-bulb text-indigo-700"></i> Kuis Dasar Web
           </h2>
-          <p class="text-sm text-slate-600 mb-5">5 soal seputar HTML/CSS/JS dasar. Jawab secepat mungkin sebelum waktu habis!</p>
 
-          <div id="quiz-start-screen" class="text-center py-8">
-            <p class="text-slate-600 mb-4">Rekor terbaik saat ini: <span id="quiz-highscore-start" class="font-semibold text-violet-700">—</span></p>
-            <button type="button" id="quiz-start-btn" class="inline-flex items-center gap-2 rounded-lg bg-violet-700 hover:bg-violet-800 text-white text-sm font-semibold px-5 py-2.5">
-              <svg class="icon" aria-hidden="true"><use href="#i-play"/></svg> Mulai Kuis
-            </button>
+          <!-- Layar mulai -->
+          <div id="quiz-start" class="space-y-4">
+            <p class="text-sm text-slate-600 max-w-prose">
+              Jawab <strong id="quiz-total-label">10</strong> soal pilihan ganda tentang HTML, CSS, dan JavaScript.
+              Kamu punya <strong id="quiz-time-label">15</strong> detik untuk tiap soal.
+            </p>
+            <div class="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 inline-block">
+              <p class="text-xs font-medium text-indigo-800">Skor terbaik</p>
+              <p id="quiz-highscore" class="font-display text-2xl font-bold text-indigo-900">—</p>
+            </div>
+            <div><button type="button" id="quiz-start-btn" class="btn btn-primary"><i class="ti ti-player-play"></i> Mulai kuis</button></div>
           </div>
 
-          <div id="quiz-question-screen" class="hidden-panel">
-            <div class="flex items-center justify-between mb-3 text-sm">
-              <span class="font-medium text-slate-600">Soal <span id="quiz-current-num">1</span> / <span id="quiz-total-num">5</span></span>
-              <span class="font-semibold text-violet-700 flex items-center gap-1"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg> <span id="quiz-timer">15</span>s</span>
+          <!-- Layar soal -->
+          <div id="quiz-play" class="hidden space-y-4">
+            <div class="flex items-center justify-between text-sm">
+              <span id="quiz-progress-label" class="font-medium text-slate-700">Soal 1 dari 10</span>
+              <span class="flex items-center gap-3">
+                <span class="text-slate-600">Skor: <strong id="quiz-live-score">0</strong></span>
+                <span id="quiz-timer" class="badge bg-slate-100 text-slate-700 gap-1"><i class="ti ti-clock"></i><span id="quiz-timer-text">15</span> dtk</span>
+              </span>
             </div>
-            <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden mb-4" aria-hidden="true">
-              <div id="quiz-timer-bar" class="h-full bg-violet-500 transition-all duration-1000" style="width:100%"></div>
+            <div class="h-2 rounded-full bg-slate-100 overflow-hidden" aria-hidden="true">
+              <div id="quiz-timer-bar" class="h-full rounded-full bg-indigo-600 transition-all duration-1000 ease-linear" style="width:100%"></div>
             </div>
-            <h3 id="quiz-question-text" class="font-medium text-slate-900 mb-4"></h3>
-            <div id="quiz-options" class="space-y-2 mb-4"></div>
-            <div id="quiz-feedback" role="status" class="hidden-panel text-sm rounded-lg px-3 py-2 mb-3"></div>
-            <button type="button" id="quiz-next-btn" class="hidden-panel inline-flex items-center gap-1.5 rounded-lg bg-violet-700 hover:bg-violet-800 text-white text-sm font-semibold px-4 py-2.5">
-              Lanjut
-            </button>
+            <p id="quiz-question" class="font-display text-lg font-bold text-slate-900"></p>
+            <div id="quiz-options" class="grid gap-2" role="group" aria-label="Pilihan jawaban"></div>
+            <p id="quiz-feedback" class="hidden alert-box" role="status"></p>
+            <div><button type="button" id="quiz-next" class="hidden btn btn-primary">Soal berikutnya <i class="ti ti-arrow-right"></i></button></div>
           </div>
 
-          <div id="quiz-result-screen" class="hidden-panel text-center py-6">
-            <p class="text-sm text-slate-600 mb-1">Skor kamu</p>
-            <p id="quiz-final-score" class="font-display text-4xl font-bold text-violet-700 mb-2">0 / 5</p>
-            <p id="quiz-result-message" class="text-sm text-slate-600 mb-4"></p>
-            <p class="text-sm text-slate-600 mb-5">Rekor terbaik: <span id="quiz-highscore-end" class="font-semibold text-violet-700">—</span></p>
-            <button type="button" id="quiz-restart-btn" class="inline-flex items-center gap-2 rounded-lg bg-violet-700 hover:bg-violet-800 text-white text-sm font-semibold px-5 py-2.5">
-              <svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg> Main Lagi
-            </button>
+          <!-- Layar hasil -->
+          <div id="quiz-result" class="hidden space-y-4">
+            <div>
+              <p class="text-sm text-slate-600">Skor akhir</p>
+              <p id="quiz-final-score" class="font-display text-4xl font-extrabold text-slate-900">0 / 10</p>
+            </div>
+            <p id="quiz-final-message" class="alert-box border-slate-200 bg-slate-50 text-slate-700" role="status"></p>
+            <ul id="quiz-stats" class="grid grid-cols-3 gap-3 text-center text-sm"></ul>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" id="quiz-retry" class="btn btn-primary"><i class="ti ti-refresh"></i> Ulangi kuis</button>
+            </div>
           </div>
         </div>
       </section>
     </main>
-
-    <footer class="mt-8 text-center text-xs text-slate-500">
-      Trio Digital · Studi Kasus Praktikum 3 PABWE
-    </footer>
   </div>
 
-  <!-- Modal: Ubah Transaksi -->
-  <div id="modal-edit-expense" class="fixed inset-0 z-50 hidden-panel items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-edit-expense-title">
-    <div class="modal-backdrop absolute inset-0 bg-slate-900/40" data-close-modal="edit-expense"></div>
-    <div class="relative w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-xl p-5 sm:p-6">
+  <footer class="text-center text-xs text-slate-500 py-6">
+    DompetKu · Praktikum 3 PABWE · Data tersimpan di browser (localStorage)
+  </footer>
+
+  <!-- ================= MODAL: UBAH TRANSAKSI ================= -->
+  <div id="modal-expense" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-expense-title">
+    <div data-close class="absolute inset-0 bg-slate-900/40"></div>
+    <div class="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white border border-slate-200 shadow-xl p-5 sm:p-6">
       <div class="flex items-start justify-between gap-3 mb-4">
-        <h2 id="modal-edit-expense-title" class="font-display text-lg font-semibold text-slate-900">Ubah Transaksi</h2>
-        <button type="button" data-close-modal="edit-expense" aria-label="Tutup" class="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100"><svg class="icon text-lg" aria-hidden="true"><use href="#i-x"/></svg></button>
+        <h3 id="modal-expense-title" class="font-display text-lg font-bold text-slate-900 flex items-center gap-2"><i class="ti ti-pencil text-indigo-700"></i> Ubah transaksi</h3>
+        <button type="button" data-close class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Tutup"><i class="ti ti-x text-lg"></i></button>
       </div>
-      <form id="edit-expense-form" class="space-y-3">
-        <div><label for="edit-expense-title" class="sr-only">Judul</label>
-          <input type="text" id="edit-expense-title" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm" placeholder="Judul" /></div>
-        <div><label for="edit-expense-category" class="sr-only">Kategori</label>
-          <select id="edit-expense-category" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
-            <option value="Makanan">Makanan</option>
-            <option value="Transportasi">Transportasi</option>
-            <option value="Belanja">Belanja</option>
-            <option value="Hiburan">Hiburan</option>
-            <option value="Gaji">Gaji</option>
-            <option value="Lainnya">Lainnya</option>
-          </select></div>
-        <div><label for="edit-expense-amount" class="sr-only">Jumlah</label>
-          <input type="number" id="edit-expense-amount" min="1" step="1" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm" placeholder="Jumlah" /></div>
-        <div><label for="edit-expense-type" class="sr-only">Tipe</label>
-          <select id="edit-expense-type" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
-            <option value="Pengeluaran">Pengeluaran</option>
-            <option value="Pemasukan">Pemasukan</option>
-          </select></div>
-        <div><label for="edit-expense-date" class="sr-only">Tanggal</label>
-          <input type="date" id="edit-expense-date" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm" /></div>
+      <form id="edit-expense-form" class="space-y-3" novalidate>
+        <div><label for="edit-expense-title" class="label">Judul / deskripsi</label><input type="text" id="edit-expense-title" class="field" /></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label for="edit-expense-amount" class="label">Jumlah (Rp)</label><input type="number" id="edit-expense-amount" class="field" min="0" step="any" inputmode="decimal" /></div>
+          <div><label for="edit-expense-date" class="label">Tanggal</label><input type="date" id="edit-expense-date" class="field" /></div>
+          <div><label for="edit-expense-type" class="label">Tipe</label>
+            <select id="edit-expense-type" class="field"><option value="Pengeluaran">Pengeluaran</option><option value="Pemasukan">Pemasukan</option></select></div>
+          <div><label for="edit-expense-category" class="label">Kategori</label><select id="edit-expense-category" class="field"></select></div>
+        </div>
+        <p id="edit-expense-error" class="hidden alert-box border-rose-200 bg-rose-50 text-rose-900" role="alert"></p>
         <div class="flex justify-end gap-2 pt-1">
-          <button type="button" data-close-modal="edit-expense" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Batal</button>
-          <button type="submit" class="rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white text-sm font-semibold px-4 py-2">Simpan</button>
+          <button type="button" data-close class="btn btn-outline">Batal</button>
+          <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Simpan perubahan</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Hapus Transaksi -->
-  <div id="modal-delete-expense" class="fixed inset-0 z-50 hidden-panel items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-delete-expense-title">
-    <div class="modal-backdrop absolute inset-0 bg-slate-900/40" data-close-modal="delete-expense"></div>
-    <div class="relative w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-xl p-5 sm:p-6">
-      <h2 id="modal-delete-expense-title" class="font-display text-lg font-semibold text-slate-900 mb-3">Hapus Transaksi</h2>
-      <p class="text-sm text-slate-600 mb-5">Yakin ingin menghapus <strong id="delete-expense-title"></strong>? Tindakan ini tidak dapat dibatalkan.</p>
-      <div class="flex justify-end gap-2">
-        <button type="button" data-close-modal="delete-expense" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Batal</button>
-        <button type="button" id="delete-expense-confirm" class="rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-sm font-semibold px-4 py-2">Hapus</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Ubah Bookmark -->
-  <div id="modal-edit-bookmark" class="fixed inset-0 z-50 hidden-panel items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-edit-bookmark-title">
-    <div class="modal-backdrop absolute inset-0 bg-slate-900/40" data-close-modal="edit-bookmark"></div>
-    <div class="relative w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-xl p-5 sm:p-6">
+  <!-- ================= MODAL: UBAH BOOKMARK ================= -->
+  <div id="modal-bookmark" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-bookmark-title">
+    <div data-close class="absolute inset-0 bg-slate-900/40"></div>
+    <div class="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white border border-slate-200 shadow-xl p-5 sm:p-6">
       <div class="flex items-start justify-between gap-3 mb-4">
-        <h2 id="modal-edit-bookmark-title" class="font-display text-lg font-semibold text-slate-900">Ubah Bookmark</h2>
-        <button type="button" data-close-modal="edit-bookmark" aria-label="Tutup" class="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100"><svg class="icon text-lg" aria-hidden="true"><use href="#i-x"/></svg></button>
+        <h3 id="modal-bookmark-title" class="font-display text-lg font-bold text-slate-900 flex items-center gap-2"><i class="ti ti-pencil text-indigo-700"></i> Ubah bookmark</h3>
+        <button type="button" data-close class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Tutup"><i class="ti ti-x text-lg"></i></button>
       </div>
-      <form id="edit-bookmark-form" class="space-y-3">
-        <div><label for="edit-bookmark-name" class="sr-only">Nama</label>
-          <input type="text" id="edit-bookmark-name" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm" placeholder="Nama" /></div>
-        <div><label for="edit-bookmark-url" class="sr-only">URL</label>
-          <input type="text" id="edit-bookmark-url" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm" placeholder="URL" /></div>
-        <div><label for="edit-bookmark-category" class="sr-only">Kategori</label>
-          <input type="text" id="edit-bookmark-category" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm" placeholder="Kategori" /></div>
-        <div><label for="edit-bookmark-note" class="sr-only">Catatan</label>
-          <input type="text" id="edit-bookmark-note" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm" placeholder="Catatan" /></div>
-        <p id="edit-bookmark-error" role="alert" class="hidden-panel text-sm text-rose-700"></p>
+      <form id="edit-bookmark-form" class="space-y-3" novalidate>
+        <div><label for="edit-bookmark-title" class="label">Nama / judul</label><input type="text" id="edit-bookmark-title" class="field" /></div>
+        <div><label for="edit-bookmark-url" class="label">URL</label><input type="text" id="edit-bookmark-url" class="field" inputmode="url" /></div>
+        <div><label for="edit-bookmark-category" class="label">Kategori / tag</label><input type="text" id="edit-bookmark-category" class="field" /></div>
+        <div><label for="edit-bookmark-note" class="label">Catatan (opsional)</label><input type="text" id="edit-bookmark-note" class="field" /></div>
+        <p id="edit-bookmark-error" class="hidden alert-box border-rose-200 bg-rose-50 text-rose-900" role="alert"></p>
         <div class="flex justify-end gap-2 pt-1">
-          <button type="button" data-close-modal="edit-bookmark" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Batal</button>
-          <button type="submit" class="rounded-lg bg-sky-700 hover:bg-sky-800 text-white text-sm font-semibold px-4 py-2">Simpan</button>
+          <button type="button" data-close class="btn btn-outline">Batal</button>
+          <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Simpan perubahan</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Hapus Bookmark -->
-  <div id="modal-delete-bookmark" class="fixed inset-0 z-50 hidden-panel items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-delete-bookmark-title">
-    <div class="modal-backdrop absolute inset-0 bg-slate-900/40" data-close-modal="delete-bookmark"></div>
+  <!-- ================= MODAL: KONFIRMASI HAPUS (dipakai bersama) ================= -->
+  <div id="modal-delete" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
+    <div data-close class="absolute inset-0 bg-slate-900/40"></div>
     <div class="relative w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-xl p-5 sm:p-6">
-      <h2 id="modal-delete-bookmark-title" class="font-display text-lg font-semibold text-slate-900 mb-3">Hapus Bookmark</h2>
-      <p class="text-sm text-slate-600 mb-5">Yakin ingin menghapus <strong id="delete-bookmark-title"></strong>?</p>
+      <div class="flex items-start justify-between gap-3 mb-3">
+        <h3 id="modal-delete-title" class="font-display text-lg font-bold text-slate-900 flex items-center gap-2"><i class="ti ti-trash text-rose-600"></i> <span id="delete-heading">Hapus data</span></h3>
+        <button type="button" data-close class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Tutup"><i class="ti ti-x text-lg"></i></button>
+      </div>
+      <p class="text-sm text-slate-600 mb-5">
+        Yakin ingin menghapus <strong id="delete-label" class="text-slate-900"></strong>? Tindakan ini tidak dapat dibatalkan.
+      </p>
       <div class="flex justify-end gap-2">
-        <button type="button" data-close-modal="delete-bookmark" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Batal</button>
-        <button type="button" id="delete-bookmark-confirm" class="rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-sm font-semibold px-4 py-2">Hapus</button>
+        <button type="button" data-close class="btn btn-outline">Batal</button>
+        <button type="button" id="delete-confirm" class="btn btn-danger"><i class="ti ti-trash"></i> Hapus</button>
       </div>
     </div>
   </div>
 
-  <script src="/assets/script.js" defer></script>
+  <script src="assets/script.js"></script>
 </body>
 </html>
